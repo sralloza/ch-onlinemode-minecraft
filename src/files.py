@@ -1,6 +1,5 @@
 import os
 import re
-from collections import defaultdict
 from pathlib import Path
 
 
@@ -14,8 +13,6 @@ class MetaFile(type):
         else:
             bases[0]._subtypes[name.lower().replace("file", "")] = cls
             bases[0].memory[name.lower().replace("file", "")] = list()
-
-        # print(cls, name, bases, attrs, **kwargs)
 
     def __call__(cls, *args, **kwargs):
         instance = type.__call__(cls, *args, **kwargs)
@@ -40,7 +37,6 @@ class File(metaclass=MetaFile):
         return self.path.as_posix()
 
     def change_uuid(self, uuid):
-        old_uuid = self.uuid
         new_path = self.path.with_name(uuid + self.path.suffix)
         self.path.rename(new_path)
         self.path = new_path
@@ -52,11 +48,11 @@ class File(metaclass=MetaFile):
         for subtype in cls._subtypes:
             if subtype in path:
                 return cls._subtypes[subtype](path)
-        assert 0
+        return None
 
     @classmethod
     def gen_files(cls, path):
-        for root, dirs, files in os.walk(path):
+        for root, _, files in os.walk(path):
             for filename in files:
                 file = Path(root).joinpath(filename)
                 match = uuid_pattern.search(file.as_posix())
@@ -77,10 +73,3 @@ class StatsFile(File):
 
 class AdvancementsFile(File):
     pass
-
-
-if __name__ == "__main__":
-    File.gen_files("D:/Sistema/Desktop/lia-backup/LIA 2020")
-    for file_group in File.memory.values():
-        for file in file_group:
-            file.change_uuid("asdf-1234")
