@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import List
 
-from files import AdvancementsFile, File, PlayerDataFile, StatsFile
+from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
 
 
 class Player:

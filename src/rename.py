@@ -1,5 +1,5 @@
-from dataframe import get_mode, get_username, get_uuid
-from player import Player
+from .dataframe import get_mode, get_username, get_uuid
+from .player import Player
 
 
 def set_mode(path, mode):
