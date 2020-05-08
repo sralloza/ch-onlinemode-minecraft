@@ -3,7 +3,7 @@ from .player import Player
 
 
 def set_mode(path, mode):
-    players = Player.generate("D:/Sistema/Desktop/lia-backup/LIA 2020")
+    players = Player.generate(path)
     for player in players:
         current_mode = get_mode(player.uuid)
 
@@ -22,4 +22,4 @@ def set_mode(path, mode):
 
 
 if __name__ == "__main__":
-    players = set_mode("D:/Sistema/Desktop/lia-backup/LIA 2020", False)
+    set_mode("D:/Sistema/Desktop/lia-backup/LIA 2020", False)
