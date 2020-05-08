@@ -22,23 +22,21 @@ BASE64_DF = (
     "YtMDhkN2M0NTc2M2UwLEF4ZWg5OSxGYWxzZQ0K"
 )
 
-_df = pd.read_csv(
+_DF = pd.read_csv(
     StringIO(base64.b64decode(BASE64_DF.encode()).decode()), index_col="uuid"
 )
 
 
 def get_uuid(username, mode):
-    mask = (_df.username == username) & (_df.online == mode)
-    return _df[mask].iloc[0].name
+    mask = (_DF.username == username) & (_DF.online == mode)
+    return _DF[mask].iloc[0].name
 
 
 def get_username(uuid):
-    return _df.loc[uuid, "username"]
+    return _DF.loc[uuid, "username"]
 
 
 def get_mode(uuid):
-    return _df.loc[uuid, "online"]
+    return _DF.loc[uuid, "online"]
 
 
-if __name__ == "__main__":
-    print(_df)
