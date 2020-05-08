@@ -40,3 +40,5 @@ def get_mode(uuid):
     return _DF.loc[uuid, "online"]
 
 
+def get_dataframe() -> pd.DataFrame:
+    return _DF.copy()
