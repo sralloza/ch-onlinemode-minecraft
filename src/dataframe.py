@@ -3,7 +3,7 @@ from io import StringIO
 
 import pandas as pd
 
-b64_data = (
+BASE64_DF = (
     "dXVpZCx1c2VybmFtZSxvbmxpbmUNCjQ1MzBkMTNjLWM4ZjMtNDM1MC05YzJkLTM5Mm"
     "FhNTNmMTVlMSxsdXNpY3JhZnQsVHJ1ZQ0KMGM5M2E2NjktODdjZi0zYTZkLTk5Y2Ut"
     "MzI3NTVjMTA1ODdlLGx1c2ljcmFmdCxGYWxzZQ0KNGE2MTg3NjgtNGYyNi00Njg4LT"
@@ -22,23 +22,23 @@ b64_data = (
     "YtMDhkN2M0NTc2M2UwLEF4ZWg5OSxGYWxzZQ0K"
 )
 
-df = pd.read_csv(
-    StringIO(base64.b64decode(b64_data.encode()).decode()), index_col="uuid"
+_df = pd.read_csv(
+    StringIO(base64.b64decode(BASE64_DF.encode()).decode()), index_col="uuid"
 )
 
 
 def get_uuid(username, mode):
-    mask = (df.username == username) & (df.online == mode)
-    return df[mask].iloc[0].name
+    mask = (_df.username == username) & (_df.online == mode)
+    return _df[mask].iloc[0].name
 
 
 def get_username(uuid):
-    return df.loc[uuid, "username"]
+    return _df.loc[uuid, "username"]
 
 
 def get_mode(uuid):
-    return df.loc[uuid, "online"]
+    return _df.loc[uuid, "online"]
 
 
 if __name__ == "__main__":
-    print(df)
+    print(_df)
