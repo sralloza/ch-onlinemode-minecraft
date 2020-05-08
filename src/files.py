@@ -3,10 +3,6 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-pattern = re.compile(
-    r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
-)
-
 
 class MetaFile(type):
     def __init__(cls, name, bases, attrs, **kwargs):
@@ -29,7 +25,9 @@ class MetaFile(type):
 
 
 class File(metaclass=MetaFile):
-    uuid_pattern = pattern
+    uuid_pattern = re.compile(
+        r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
+    )
 
     def __init__(self, path):
         self.path = Path(path)
@@ -61,7 +59,7 @@ class File(metaclass=MetaFile):
         for root, dirs, files in os.walk(path):
             for filename in files:
                 file = Path(root).joinpath(filename)
-                match = pattern.search(file.as_posix())
+                match = uuid_pattern.search(file.as_posix())
                 if match:
                     File.identify(file)
 
