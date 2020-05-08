@@ -27,9 +27,6 @@ class Player:
         assert self.advancements_file
 
     def __repr__(self):
-        self.player_data_file
-        self.stats_file
-        self.advancements_file
         return f"Player({self.uuid!r})"
 
     def to_extended_repr(self):
@@ -46,12 +43,12 @@ class Player:
         self.advancements_file.change_uuid(new_uuid)
 
     @classmethod
-    def generate(cls, root_path: str):
+    def generate(cls, root_path: str) -> List['Player']:
         File.gen_files(root_path)
 
-        files_map = defaultdict(lambda: list())
+        files_map = defaultdict(list)
 
-        for file_type, file_group in File.memory.items():
+        for file_group in File.memory.values():
             for file in file_group:
                 uuid = File.uuid_pattern.search(file.path.as_posix()).group()
                 files_map[uuid].append(file)
