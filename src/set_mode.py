@@ -18,7 +18,6 @@ def set_mode(path, mode):
             raise Exception(msg)
 
         new_uuid = get_uuid(get_username(player.uuid), mode)
-        # print(player.uuid, new_uuid)
         player.change_uuid(new_uuid)
 
 
