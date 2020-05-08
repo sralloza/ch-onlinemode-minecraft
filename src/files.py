@@ -8,10 +8,10 @@ class MetaFile(type):
         type.__init__(cls, name, bases, attrs, **kwargs)
 
         if not bases:
-            cls._subtypes = {}
+            cls.subtypes = {}
             cls.memory = {}
         else:
-            bases[0]._subtypes[name.lower().replace("file", "")] = cls
+            bases[0].subtypes[name.lower().replace("file", "")] = cls
             bases[0].memory[name.lower().replace("file", "")] = list()
 
     def __call__(cls, *args, **kwargs):
@@ -45,9 +45,9 @@ class File(metaclass=MetaFile):
     @classmethod
     def identify(cls, path):
         path = Path(path).as_posix()
-        for subtype in cls._subtypes:
+        for subtype in cls.subtypes:
             if subtype in path:
-                return cls._subtypes[subtype](path)
+                return cls.subtypes[subtype](path)
         return None
 
     @classmethod
