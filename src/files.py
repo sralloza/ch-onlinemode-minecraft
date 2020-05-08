@@ -55,7 +55,7 @@ class File(metaclass=MetaFile):
         for root, _, files in os.walk(path):
             for filename in files:
                 file = Path(root).joinpath(filename)
-                match = uuid_pattern.search(file.as_posix())
+                match = cls.uuid_pattern.search(file.as_posix())
                 if match:
                     File.identify(file)
 
