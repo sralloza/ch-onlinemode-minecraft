@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import List
 
+from src.dataframe import get_username
+
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
 
 
@@ -8,9 +10,12 @@ class Player:
     player_data_file: File
     stats_file: File
     advancements_file: File
+    uuid: str
+    username: str
 
     def __init__(self, uuid, *files):
         self.uuid = uuid
+        self.username = get_username(self.uuid)
 
         for file in files:
             if isinstance(file, PlayerDataFile):
@@ -27,11 +32,11 @@ class Player:
         assert self.advancements_file
 
     def __repr__(self):
-        return f"Player({self.uuid!r})"
+        return f"Player({self.username} - {self.uuid!r})"
 
     def to_extended_repr(self):
         return (
-            f"Player({self.uuid!r}, "
+            f"Player({self.username} - {self.uuid!r}, "
             f"player_data_file={self.player_data_file.as_posix()!r}, "
             f"stats_file={self.stats_file.as_posix()!r}, "
             f"advancements_file={self.advancements_file.as_posix()!r})"
@@ -55,7 +60,3 @@ class Player:
         return [Player(uuid, *files_map[uuid]) for uuid in files_map]
 
 
-if __name__ == "__main__":
-    players = Player.generate("D:/Sistema/Desktop/lia-backup/LIA 2020")
-    for player in players:
-        print(player)
