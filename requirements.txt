@@ -1,3 +1,4 @@
+colorama
 nbtlib
 numpy
 pandas
