@@ -9,7 +9,7 @@
         "command": "${config:python.pythonPath}",
         "args": [
             "-m",
-            "src",
+            "server_manager",
             "online-mode",
             "${input:online-mode}"
         ],

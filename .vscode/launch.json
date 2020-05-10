@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "program": "",
-      "args": ["-m", "src", "online-mode", "${input:online-mode}"],
+      "args": ["-m", "server_manager", "online-mode", "${input:online-mode}"],
       "console": "integratedTerminal"
     }
   ],
