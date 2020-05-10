@@ -1,4 +1,6 @@
 from collections import defaultdict
+from itertools import groupby
+from pathlib import Path
 from typing import List
 
 from src.dataframe import get_username
@@ -48,15 +50,37 @@ class Player:
         self.advancements_file.change_uuid(new_uuid)
 
     @classmethod
-    def generate(cls, root_path: str) -> List['Player']:
+    def generate(cls, root_path: Path, check=True) -> List["Player"]:
         File.gen_files(root_path)
 
         files_map = defaultdict(list)
 
         for file_group in File.memory.values():
             for file in file_group:
-                uuid = File.uuid_pattern.search(file.path.as_posix()).group()
+                match = File.uuid_pattern.search(file.path.as_posix())
+                if not match:
+                    raise ValueError(
+                        f"{file} is not a valid file (it doesn't contain a UUID"
+                    )
+
+                uuid = match.group()
                 files_map[uuid].append(file)
-        return [Player(uuid, *files_map[uuid]) for uuid in files_map]
+        players = [Player(uuid, *files_map[uuid]) for uuid in files_map]
+        players.sort(key=lambda x: x.username)
 
+        if not check:
+            return players
 
+        # Checking that players can only have one online mode
+        invalids = {}
+        for username, players_ in groupby(players, lambda x: x.username):
+            nplayers = len(players_)
+            if nplayers > 1:
+                invalids[username] = nplayers
+
+        if invalids:
+            raise ValueError(
+                f"These players have more than one online mode: {invalids}"
+            )
+
+        return players
