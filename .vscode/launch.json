@@ -1,0 +1,24 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run app",
+      "type": "python",
+      "request": "launch",
+      "program": "",
+      "args": ["-m", "src", "online-mode", "${input:online-mode}"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "online-mode",
+      "type": "pickString",
+      "options": ["True", "False"],
+      "description": "Set online mode"
+    }
+  ]
+}
