@@ -1,9 +1,10 @@
 import argparse
 import sys
 
-from src.dataframe import get_dataframe
-from src.set_mode import set_mode
-from src.utils import Memory, str2bool
+from .src.dataframe import get_dataframe, get_mode
+from .src.player import Player
+from .src.set_mode import set_mode
+from .src.utils import Memory, str2bool
 
 
 def parse_args() -> dict:
@@ -13,9 +14,9 @@ def parse_args() -> dict:
     online_mode_parser = subparsers.add_parser("online-mode")
     online_mode_parser.add_argument("online-mode", type=str2bool, nargs="?")
 
-    data_parser = subparsers.add_parser("data")
-
-    whitelist_parser = subparsers.add_parser("whitelist")
+    subparsers.add_parser("list")
+    subparsers.add_parser("data")
+    subparsers.add_parser("whitelist")
 
     Memory.set_parser(parser)
     return vars(parser.parse_args())
@@ -33,6 +34,15 @@ def main():
 
     if command == "data":
         print(get_dataframe())
+        sys.exit()
+
+    if command == "list":
+        players = Player.generate()
+        for player in players:
+            print(
+                " - %s - %s - %s"
+                % (player.username, get_mode(player.uuid), player.uuid)
+            )
         sys.exit()
 
 

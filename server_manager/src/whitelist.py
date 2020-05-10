@@ -1,7 +1,7 @@
 """Manages server whitelist."""
 import json
 
-from src.dataframe import get_dataframe
+from .dataframe import get_dataframe
 
 
 def create_whitelist() -> str:

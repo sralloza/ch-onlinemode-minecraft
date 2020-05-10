@@ -6,7 +6,7 @@ from typing import Union
 
 from colorama import Fore
 
-from src.utils import Memory, bool2str, str2bool
+from .utils import Memory, bool2str, str2bool
 
 ONLINE_MODE_PATTERN: re.Pattern = re.compile(r"(online-mode=)(\w+)", re.IGNORECASE)
 DATA_PATH = Path(__file__).parent.joinpath("data/server-path.txt")

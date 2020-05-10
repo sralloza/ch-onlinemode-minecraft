@@ -1,8 +1,11 @@
 import base64
+import logging
 from io import StringIO
 
 import pandas as pd
 import pyperclip
+
+logger = logging.getLogger(__name__)
 
 BASE64_DF = (
     "dXVpZCx1c2VybmFtZSxvbmxpbmUNCjQ1MzBkMTNjLWM4ZjMtNDM1MC05YzJkLTM5Mm"
@@ -23,9 +26,11 @@ BASE64_DF = (
     "YtMDhkN2M0NTc2M2UwLEF4ZWg5OSxGYWxzZQ0K"
 )
 
+logger.debug("loading dataframe")
 _DF = pd.read_csv(
     StringIO(base64.b64decode(BASE64_DF.encode()).decode()), index_col="uuid"
 )
+logger.debug("dataframe loaded")
 
 
 def get_uuid(username, mode):

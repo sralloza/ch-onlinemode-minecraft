@@ -1,6 +1,9 @@
+import logging
 import os
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class MetaFile(type):
@@ -37,6 +40,7 @@ class File(metaclass=MetaFile):
         return self.path.as_posix()
 
     def change_uuid(self, uuid):
+        logger.debug("Changing uuid to %s of file %s", uuid, self.path.as_posix())
         new_path = self.path.with_name(uuid + self.path.suffix)
         self.path.rename(new_path)
         self.path = new_path
@@ -52,12 +56,14 @@ class File(metaclass=MetaFile):
 
     @classmethod
     def gen_files(cls, path: Path):
+        logger.debug("generating files for path %s", path.as_posix())
         for root, _, files in os.walk(path):
             for filename in files:
                 file = Path(root).joinpath(filename)
                 match = cls.uuid_pattern.search(file.as_posix())
                 if match:
                     File.identify(file)
+        logger.info("files generated")
 
     def __repr__(self):
         return f"{type(self).__name__}({self.path!r})"
