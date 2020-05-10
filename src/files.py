@@ -51,7 +51,7 @@ class File(metaclass=MetaFile):
         return None
 
     @classmethod
-    def gen_files(cls, path):
+    def gen_files(cls, path: Path):
         for root, _, files in os.walk(path):
             for filename in files:
                 file = Path(root).joinpath(filename)

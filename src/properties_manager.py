@@ -2,6 +2,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from typing import Union
 
 from colorama import Fore
 
@@ -30,7 +31,7 @@ def get_server_path() -> Path:
     return Path(server_path)
 
 
-def validate_server_path(server_path: str):
+def validate_server_path(server_path: Union[str, Path]):
     server_path = Path(server_path)
     properties_path = get_server_properties_filepath(server_path)
     if not properties_path.exists():
