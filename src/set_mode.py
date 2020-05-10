@@ -1,3 +1,5 @@
+import sys
+
 from src.properties_manager import get_server_path
 
 from .dataframe import get_mode, get_username, get_uuid
@@ -9,6 +11,9 @@ def set_mode(mode=None):
     server_path = get_server_path()
     current_servermode = get_server_mode()
 
+    if mode is None:
+        print(f"server is currently running as {current_servermode}")
+        sys.exit()
 
     players = Player.generate(server_path)
     for player in players:
