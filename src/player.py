@@ -3,7 +3,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import List
 
-from src.dataframe import get_username
+from src.dataframe import get_mode, get_username
 
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
 
@@ -18,6 +18,7 @@ class Player:
     def __init__(self, uuid, *files):
         self.uuid = uuid
         self.username = get_username(self.uuid)
+        self.online = get_mode(self.uuid)
 
         for file in files:
             if isinstance(file, PlayerDataFile):
@@ -34,7 +35,7 @@ class Player:
         assert self.advancements_file
 
     def __repr__(self):
-        return f"Player({self.username} - {self.uuid!r})"
+        return f"Player({self.username}|{self.online} - {self.uuid!r})"
 
     def to_extended_repr(self):
         return (
