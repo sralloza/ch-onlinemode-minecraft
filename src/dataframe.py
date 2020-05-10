@@ -2,6 +2,7 @@ import base64
 from io import StringIO
 
 import pandas as pd
+import pyperclip
 
 BASE64_DF = (
     "dXVpZCx1c2VybmFtZSxvbmxpbmUNCjQ1MzBkMTNjLWM4ZjMtNDM1MC05YzJkLTM5Mm"
@@ -42,3 +43,14 @@ def get_mode(uuid):
 
 def get_dataframe() -> pd.DataFrame:
     return _DF.copy()
+
+
+def excel_to_b64(excel_path: str):
+    df = pd.read_excel("players-data.xlsx")
+    df.set_index("uuid", inplace=True)
+
+    bytes_df = df.to_csv(index="uuid").encode()
+
+    b64data = base64.b64encode(bytes_df).decode()
+    print(b64data)
+    pyperclip.copy(b64data)
