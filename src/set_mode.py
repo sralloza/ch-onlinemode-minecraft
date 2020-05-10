@@ -1,9 +1,16 @@
+from src.properties_manager import get_server_path
+
 from .dataframe import get_mode, get_username, get_uuid
 from .player import Player
+from .properties_manager import get_server_mode, set_server_mode
 
 
-def set_mode(path, mode):
-    players = Player.generate(path)
+def set_mode(mode=None):
+    server_path = get_server_path()
+    current_servermode = get_server_mode()
+
+
+    players = Player.generate(server_path)
     for player in players:
         current_mode = get_mode(player.uuid)
 
@@ -20,6 +27,4 @@ def set_mode(path, mode):
         new_uuid = get_uuid(get_username(player.uuid), mode)
         player.change_uuid(new_uuid)
 
-
-if __name__ == "__main__":
-    set_mode("D:/Sistema/Desktop/lia-backup/LIA 2020", False)
+    set_server_mode(mode)
