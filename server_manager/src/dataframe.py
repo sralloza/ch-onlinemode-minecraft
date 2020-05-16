@@ -43,7 +43,7 @@ def get_username(uuid):
 
 
 def get_mode(uuid):
-    return _DF.loc[uuid, "online"]
+    return bool(_DF.loc[uuid, "online"])
 
 
 def get_dataframe() -> pd.DataFrame:
