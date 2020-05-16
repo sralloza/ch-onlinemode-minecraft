@@ -33,16 +33,16 @@ _DF = pd.read_csv(
 logger.debug("dataframe loaded")
 
 
-def get_uuid(username, mode):
+def get_uuid(username, mode) -> str:
     mask = (_DF.username == username) & (_DF.online == mode)
     return _DF[mask].iloc[0].name
 
 
-def get_username(uuid):
+def get_username(uuid) -> str:
     return _DF.loc[uuid, "username"]
 
 
-def get_mode(uuid):
+def get_mode(uuid) -> bool:
     return bool(_DF.loc[uuid, "online"])
 
 
