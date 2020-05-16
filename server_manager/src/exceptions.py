@@ -2,5 +2,9 @@ class ServerManagerError(Exception):
     pass
 
 
-class InvalidStateError(ServerManagerError):
+class InvalidServerStateError(ServerManagerError):
+    pass
+
+
+class InvalidPlayerDataStateError(ServerManagerError):
     pass

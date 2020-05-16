@@ -4,7 +4,7 @@ from itertools import groupby
 from typing import List
 
 from .dataframe import get_mode, get_username, get_uuid
-from .exceptions import InvalidStateError
+from .exceptions import InvalidPlayerDataStateError, InvalidStateError
 from .player import Player
 from .properties_manager import get_server_mode, get_server_path, set_server_mode
 
@@ -94,7 +94,9 @@ def set_mode(mode=None):
 
     if current_servermode == mode:
         logger.critical("server is currently running as %s", current_servermode)
-        raise InvalidStateError(f"server is currently running as {current_servermode}")
+        raise InvalidServerStateError(
+            f"server is currently running as {current_servermode}"
+        )
 
     for player in players:
         current_player_mode = get_mode(player.uuid)
@@ -109,7 +111,7 @@ def set_mode(mode=None):
 
             logger.critical(msg, *args)
             # TODO: more meaningful name for exception
-            raise Exception(msg % args)
+            raise InvalidPlayerDataStateError(msg % args)
 
         new_uuid = get_uuid(get_username(player.uuid), mode)
         player.change_uuid(new_uuid)
