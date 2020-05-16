@@ -1,2 +1,6 @@
-class InvalidStateError(Exception):
+class ServerManagerError(Exception):
+    pass
+
+
+class InvalidStateError(ServerManagerError):
     pass
