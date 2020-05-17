@@ -4,7 +4,7 @@ from itertools import groupby
 from typing import List
 
 from .dataframe import get_mode, get_username, get_uuid
-from .exceptions import InvalidPlayerDataStateError, InvalidStateError
+from .exceptions import InvalidPlayerDataStateError, InvalidServerStateError
 from .player import Player
 from .properties_manager import get_server_mode, get_server_path, set_server_mode
 
