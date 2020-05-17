@@ -88,7 +88,7 @@ def set_mode(mode=None):
     check_players(players)
 
     if mode is None:
-        logger.info(f"server is currently running as %s", current_servermode)
+        logger.info("server is currently running as %s", current_servermode)
         print(f"server is currently running as {current_servermode}")
         sys.exit()
 
