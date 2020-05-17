@@ -51,7 +51,7 @@ def get_dataframe() -> pd.DataFrame:
 
 
 def excel_to_b64(excel_path: str):
-    df = pd.read_excel("players-data.xlsx")
+    df = pd.read_excel(excel_path)
     df.set_index("uuid", inplace=True)
 
     bytes_df = df.to_csv(index="uuid").encode()
