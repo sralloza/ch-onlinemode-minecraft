@@ -82,7 +82,7 @@ class File(metaclass=MetaFile):
         logger.info("files generated")
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.path!r})"
+        return f"{type(self).__name__}({self.as_posix()!r})"
 
 
 class PlayerDataFile(File):
