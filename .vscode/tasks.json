@@ -4,18 +4,19 @@
   "version": "2.0.0",
   "tasks": [
     {
-        "label": "Run app",
-        "type": "shell",
-        "command": "${config:python.pythonPath}",
-        "args": [
-            "-m",
-            "server_manager",
-            "online-mode",
-            "${input:online-mode}"
-        ],
-        "problemMatcher": []
+      "label": "Run app",
+      "type": "shell",
+      "command": "${config:python.pythonPath}",
+      "args": ["-m", "server_manager", "online-mode", "${input:online-mode}"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean with git",
+      "type": "shell",
+      "command": "git clean -fdx -e data -e .venv -e tests",
+      "problemMatcher": []
     }
-],
+  ],
   "inputs": [
     {
       "id": "online-mode",
