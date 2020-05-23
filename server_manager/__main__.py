@@ -40,11 +40,17 @@ def main():
 
     if command == "list":
         players = Player.generate()
+        data = []
         for player in players:
-            print(
-                " - %s - %s - %s"
-                % (player.username, get_mode(player.uuid), player.uuid)
-            )
+            mode = "online" if get_mode(player.uuid) else "offine"
+            data.append((player.username, mode, player.uuid))
+
+        lengths = [max([len(k[x]) for k in data]) for x in range(len(data[0]))]
+
+        for row in data:
+            format_data = tuple([x for y in zip(lengths, row) for x in y])
+            print(" - %-*s - %-*s - %*s" % format_data)
+
         sys.exit()
 
     if command == "debug-files":
