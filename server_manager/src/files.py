@@ -20,7 +20,9 @@ class MetaFile(type):
     def __call__(cls, *args, **kwargs):
         instance = type.__call__(cls, *args, **kwargs)
         classname = cls.__name__.lower().replace("file", "")
-        cls.__bases__[0].memory[classname].append(instance)
+        if cls.__bases__[0] != object:
+            cls.__bases__[0].memory[classname].append(instance)
+
         return instance
 
 
