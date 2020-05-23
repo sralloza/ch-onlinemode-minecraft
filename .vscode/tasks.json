@@ -15,6 +15,13 @@
       "type": "shell",
       "command": "git clean -fdx -e data -e .venv -e tests",
       "problemMatcher": []
+    },
+    {
+      "label": "Lint current file",
+      "type": "shell",
+      "command": "${config:python.pythonPath}",
+      "args": ["-m", "pylint", "${file}"],
+      "problemMatcher": []
     }
   ],
   "inputs": [
