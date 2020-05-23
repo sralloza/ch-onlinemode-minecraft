@@ -8,3 +8,7 @@ class InvalidServerStateError(ServerManagerError):
 
 class InvalidPlayerDataStateError(ServerManagerError):
     pass
+
+
+class InvalidFileError(ServerManagerError):
+    pass
