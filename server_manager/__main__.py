@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from .src.dataframe import get_dataframe, get_mode
+from .src.files import File
 from .src.player import Player
 from .src.set_mode import set_mode
 from .src.utils import Memory, str2bool
@@ -15,6 +16,7 @@ def parse_args() -> dict:
     online_mode_parser.add_argument("online-mode", type=str2bool, nargs="?")
 
     subparsers.add_parser("list")
+    subparsers.add_parser("debug-files")
     subparsers.add_parser("data")
     subparsers.add_parser("whitelist")
 
@@ -44,6 +46,12 @@ def main():
                 % (player.username, get_mode(player.uuid), player.uuid)
             )
         sys.exit()
+
+    if command == "debug-files":
+        Player.generate()
+        for key in File.memory:
+            for file in File.memory[key]:
+                print(file)
 
 
 if __name__ == "__main__":
