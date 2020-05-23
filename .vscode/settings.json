@@ -1,7 +1,7 @@
 {
   "python.pythonPath": ".venv\\Scripts\\python.exe",
   "python.testing.pytestArgs": [
-    "server_manager"
+    "server_manager", "-o", "junit_family=xunit1"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.nosetestsEnabled": false,
