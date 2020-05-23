@@ -3,6 +3,8 @@ import os
 import re
 from pathlib import Path
 
+from server_manager.src.exceptions import InvalidFileError
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,8 +37,20 @@ class File(metaclass=MetaFile):
         self.path = Path(path)
 
     @property
-    def uuid(self):
-        return self.uuid_pattern.search(self.path.as_posix()).group()
+    def uuid(self) -> str:
+        """Returns the uuid of the player which data is in the file.
+
+        Raises:
+            InvalidFileError: if no uuid is found in the filename.
+
+        Returns:
+            str: uuid.
+        """
+
+        try:
+            return self.uuid_pattern.search(self.path.as_posix()).group()
+        except AttributeError:
+            raise InvalidFileError(f"{self.path} does not contain a uuid")
 
     def as_posix(self):
         return self.path.as_posix()
