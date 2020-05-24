@@ -26,7 +26,7 @@
     {
       "label": "Run coverage report",
       "type": "shell",
-      "command": "${config:python.pythonPath} -m coverage run -m pytest -vv -l & ${config:python.pythonPath} -m coverage html & chrome.exe ${workspaceFolder}\\htmlcov\\index.html",
+      "command": "${config:python.pythonPath} -m coverage run --omit .venv/* -m pytest -vv -l & ${config:python.pythonPath} -m coverage html & chrome.exe ${workspaceFolder}\\htmlcov\\index.html",
       "problemMatcher": []
     }
   ],
