@@ -39,6 +39,12 @@ class Player:
     def __repr__(self):
         return f"Player({self.username}|{self.online} - {self.uuid!r})"
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def to_extended_repr(self):
         return (
             f"Player({self.username} - {self.uuid!r}, "
