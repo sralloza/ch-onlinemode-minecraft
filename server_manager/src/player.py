@@ -4,14 +4,16 @@ from pathlib import Path
 from typing import List
 
 from .dataframe import get_mode, get_username
+from .exceptions import InvalidPlayerError
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
 from .properties_manager import get_server_path
 
 
 class Player:
+    required_files = ["player_data_file", "stats_file", "advancements_file"]
     logger: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, uuid, *files):
+    def __init__(self, uuid: str, *files):
         self.uuid = uuid
         self.username = get_username(self.uuid)
         self.online = get_mode(self.uuid)
@@ -26,9 +28,12 @@ class Player:
             else:
                 raise TypeError(f"files can't be {type(type).__name__!r}")
 
-        assert self.player_data_file
-        assert self.stats_file
-        assert self.advancements_file
+        for file in self.required_files:
+            if not hasattr(self, file):
+                file = file.replace("file", "").replace("_", " ")
+                raise InvalidPlayerError(
+                    f"Can't create Player {self.username!r} without {file}"
+                )
 
     def __repr__(self):
         return f"Player({self.username}|{self.online} - {self.uuid!r})"
