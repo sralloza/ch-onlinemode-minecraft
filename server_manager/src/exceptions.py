@@ -12,3 +12,7 @@ class InvalidPlayerDataStateError(ServerManagerError):
 
 class InvalidFileError(ServerManagerError):
     pass
+
+
+class InvalidPlayerError(ServerManagerError):
+    pass
