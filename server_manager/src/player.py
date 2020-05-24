@@ -1,20 +1,14 @@
-import logging
 from collections import defaultdict
+import logging
 from pathlib import Path
 from typing import List
 
 from .dataframe import get_mode, get_username
-from .properties_manager import get_server_path
-
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
+from .properties_manager import get_server_path
 
 
 class Player:
-    player_data_file: File
-    stats_file: File
-    advancements_file: File
-    uuid: str
-    username: str
     logger: logging.Logger = logging.getLogger(__name__)
 
     def __init__(self, uuid, *files):
