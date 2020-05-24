@@ -22,6 +22,12 @@
       "command": "${config:python.pythonPath}",
       "args": ["-m", "pylint", "${file}"],
       "problemMatcher": []
+    },
+    {
+      "label": "Run coverage report",
+      "type": "shell",
+      "command": "${config:python.pythonPath} -m coverage run -m pytest -vv -l & ${config:python.pythonPath} -m coverage html & chrome.exe ${workspaceFolder}\\htmlcov\\index.html",
+      "problemMatcher": []
     }
   ],
   "inputs": [
