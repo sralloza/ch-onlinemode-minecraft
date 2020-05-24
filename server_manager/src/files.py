@@ -25,11 +25,9 @@ class MetaFile(type):
             return instance
 
         classname = instance.__class__.__name__.lower().replace("file", "")
-        if hasattr(cls, "memory"):
-            if instance not in cls.memory[classname]:
-                cls.memory[classname].append(instance)
-        else:
-            cls.__bases__[0].memory[classname].append(instance)
+
+        if instance not in cls.memory[classname]:
+            cls.memory[classname].append(instance)
 
         return instance
 
