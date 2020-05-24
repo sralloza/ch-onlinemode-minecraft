@@ -33,6 +33,28 @@ class File(metaclass=MetaFile):
         r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
     )
 
+    # For hinting purposes only (it is declared inside `MetaFile`)
+    subtypes = {}
+    memory = {}
+
+    def __new__(cls, path):
+        """Representation of a minecraft player file. Must contain a uuid.
+
+        Args:
+            path (str): path of the file.
+
+        Returns:
+            Optional[File]: File instance, maybe.
+        """
+
+        if cls == File:
+            return File.identify(path)
+
+        self = super().__new__(cls)
+        self.__init__(path)
+
+        return self
+
     def __init__(self, path):
         self.path = Path(path)
 
