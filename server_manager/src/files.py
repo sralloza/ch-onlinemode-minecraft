@@ -21,8 +21,14 @@ class MetaFile(type):
 
     def __call__(cls, *args, **kwargs):
         instance = type.__call__(cls, *args, **kwargs)
-        classname = cls.__name__.lower().replace("file", "")
-        if cls.__bases__[0] != object:
+        if not instance:
+            return instance
+
+        classname = instance.__class__.__name__.lower().replace("file", "")
+        if hasattr(cls, "memory"):
+            if instance not in cls.memory[classname]:
+                cls.memory[classname].append(instance)
+        else:
             cls.__bases__[0].memory[classname].append(instance)
 
         return instance
