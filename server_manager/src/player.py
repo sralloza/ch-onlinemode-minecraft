@@ -36,7 +36,7 @@ class Player:
                 )
 
     def __repr__(self):
-        return f"Player({self.username}|{self.online} - {self.uuid!r})"
+        return f"Player({self.username}|{self.online} - {self.uuid})"
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -46,7 +46,7 @@ class Player:
 
     def to_extended_repr(self):
         return (
-            f"Player({self.username} - {self.uuid!r}, "
+            f"Player({self.username}|{self.online} - {self.uuid}, "
             f"player_data_file={self.player_data_file.as_posix()!r}, "
             f"stats_file={self.stats_file.as_posix()!r}, "
             f"advancements_file={self.advancements_file.as_posix()!r})"
@@ -60,8 +60,6 @@ class Player:
 
     @classmethod
     def generate(cls, root_path: Path = None) -> List["Player"]:
-        # FIXME: right now, both Player.generate and set_mode (who calls the first one) generate
-        # the root_path. Player.generate needs it, but set_mode just logs it. Think this.
         if not root_path:
             root_path = get_server_path()
 
