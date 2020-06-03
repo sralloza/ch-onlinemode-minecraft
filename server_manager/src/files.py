@@ -62,6 +62,9 @@ class File(metaclass=MetaFile):
     def __init__(self, path):
         self.path = Path(path)
 
+    def __eq__(self, other):
+        return self.path == other.path
+
     @property
     def uuid(self) -> str:
         """Returns the uuid of the player which data is in the file.
