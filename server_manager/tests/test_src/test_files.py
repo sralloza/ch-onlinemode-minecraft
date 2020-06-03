@@ -76,13 +76,6 @@ class TestMetaFile:
 class TestFile:
     @classmethod
     def setup_class(cls):
-        # class Base:
-        #     def __init__(self, path):
-        #         self.path = path
-
-        #     def __repr__(self):
-        #         return f"{self.__class__.__name__}({self.path!r})"
-
         class TypeA(File):
             pass
 
@@ -95,9 +88,6 @@ class TestFile:
         cls.subtypes = {"typea": TypeA, "typeb": TypeB, "typec": TypeC}
         cls.memory = {"typea": [], "typeb": [], "typec": []}
 
-        # File.subtypes = cls.subtypes
-
-        # cls.Base = Base
         cls.TypeA = TypeA
         cls.TypeB = TypeB
         cls.TypeC = TypeC
