@@ -4,6 +4,8 @@ import sys
 from argparse import ArgumentParser
 from typing import Dict, NoReturn
 
+from server_manager.src.exceptions import InvalidServerStateError
+
 from .src.dataframe import get_dataframe, get_mode
 from .src.files import File
 from .src.player import Player
@@ -52,7 +54,12 @@ def main():
 
     if command == "online-mode":
         online_mode = args["online-mode"]
-        set_mode(mode=online_mode)
+
+        try:
+            set_mode(mode=online_mode)
+        except InvalidServerStateError as exc:
+            Parser.error(" ".join(exc.args))
+
         print(f"Set online-mode to {online_mode}")
         sys.exit()
 
