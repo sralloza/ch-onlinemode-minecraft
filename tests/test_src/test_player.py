@@ -255,12 +255,3 @@ class TestGenerate:
         pl_m.assert_called()
         assert pl_m.call_count == 3
 
-    def test_error(self, mocks):
-        gf_m, pl_m = mocks
-        self.memory["typea"][0] = self.TypeA("invalid-path")
-
-        with pytest.raises(ValueError, match="invalid-path"):
-            Player.generate(Path("root"))
-
-        gf_m.assert_called_once_with(Path("root"))
-        pl_m.assert_not_called()

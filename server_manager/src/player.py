@@ -105,6 +105,7 @@ class Player:
 
         for file_group in File.memory.values():
             for file in file_group:
+                # match must be always true, trust File.memory
                 match = File.uuid_pattern.search(file.path.as_posix())
                 uuid = match.group()
                 files_map[uuid].append(file)
