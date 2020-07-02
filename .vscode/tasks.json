@@ -26,7 +26,25 @@
     {
       "label": "Run coverage report",
       "type": "shell",
-      "command": "${config:python.pythonPath} -m coverage run --omit .venv/* -m pytest -vv -l & ${config:python.pythonPath} -m coverage html & chrome.exe ${workspaceFolder}\\htmlcov\\index.html",
+      "command": "${config:python.pythonPath} -m coverage run -m pytest -vv -l & ${config:python.pythonPath} -m coverage html & chrome.exe ${workspaceFolder}\\htmlcov\\index.html",
+      "problemMatcher": []
+    },
+    {
+      "label": "black",
+      "type": "shell",
+      "command": "${config:python.pythonPath} -m black .",
+      "problemMatcher": []
+    },
+    {
+      "label": "pylint code",
+      "type": "shell",
+      "command": "${config:python.pythonPath} -m pylint server_manager --ignore=_version.py -d C0330,W0622,R0913,R0903",
+      "problemMatcher": []
+    },
+    {
+      "label": "pylint tests",
+      "type": "shell",
+      "command": "${config:python.pythonPath} -m pylint tests -d C0330,C0114,C0115,C0116,R0201,R0915,W0201,R0914,R0912,C0415",
       "problemMatcher": []
     }
   ],
