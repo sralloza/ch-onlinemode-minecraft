@@ -1,12 +1,12 @@
 import os
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 from typing import Union
 
 from colorama import Fore
 
-from server_manager.__main__ import Parser
+
 from .utils import bool2str, str2bool
 
 ONLINE_MODE_PATTERN: re.Pattern = re.compile(r"(online-mode=)(\w+)", re.IGNORECASE)
@@ -70,8 +70,9 @@ def properties_manager(online_mode=None):
         return current_online_mode
 
     if online_mode == current_online_mode:
-        Parser.error(f"online-mode is already set to {current_online_mode}")
-        sys.exit()
+        from server_manager.main import Parser
+
+        return Parser.error(f"online-mode is already set to {current_online_mode}")
 
     changed_file_data = ONLINE_MODE_PATTERN.sub(
         r"\1" + bool2str(online_mode), file_data
