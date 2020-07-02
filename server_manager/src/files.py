@@ -1,14 +1,20 @@
+"""Files manager."""
+
 import logging
 import os
 import re
 from pathlib import Path
+from typing import Type, Union
 
 from server_manager.src.exceptions import InvalidFileError
 
 logger = logging.getLogger(__name__)
+DataFile = Type["Player"]
 
 
 class MetaFile(type):
+    """Metaclass to store different file types and its istances."""
+
     def __init__(cls, name, bases, attrs, **kwargs):
         type.__init__(cls, name, bases, attrs, **kwargs)
 
@@ -33,6 +39,8 @@ class MetaFile(type):
 
 
 class File(metaclass=MetaFile):
+    """Representation of a file containing player data."""
+
     uuid_pattern = re.compile(
         r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
     )
@@ -81,10 +89,25 @@ class File(metaclass=MetaFile):
         except AttributeError:
             raise InvalidFileError(f"{self.path} does not contain a uuid")
 
-    def as_posix(self):
+    def as_posix(self) -> str:
+        """Returns its file path.
+
+        Returns:
+            str: file path.
+        """
+
         return self.path.as_posix()
 
-    def change_uuid(self, uuid):
+    def change_uuid(self, uuid: str) -> bool:
+        """Changes the uuid of the player data file.
+
+        Args:
+            uuid (str): new uuid.
+
+        Returns:
+            bool: True if the conversion was success, False otherwise.
+        """
+
         logger.debug("Changing uuid to %s of file %s", uuid, self.path.as_posix())
         new_path = self.path.with_name(uuid + self.path.suffix)
         self.path.rename(new_path)
@@ -92,7 +115,17 @@ class File(metaclass=MetaFile):
         return True
 
     @classmethod
-    def identify(cls, path):
+    def identify(cls, path: Union[str, Path]) -> DataFile:
+        """Identifies the type of player data that `path` stores.
+
+        Args:
+            path (Union[str, Path]): path of the player data file.
+
+        Returns:
+            Optional[DataFile]: If the file is identified, the a Player object is returned.
+                If the file is not identified, None is returned.
+        """
+
         path = Path(path).as_posix()
         for subtype in cls.subtypes:
             if subtype in path:
@@ -101,6 +134,12 @@ class File(metaclass=MetaFile):
 
     @classmethod
     def gen_files(cls, path: Path):
+        """Scans dir `path` recursively looking for files that contain minecraft player data.
+
+        Args:
+            path (Path): root dir to start recursive scan.
+        """
+
         logger.debug("generating files for path %s", path.as_posix())
         for root, _, files in os.walk(path):
             for filename in files:
@@ -115,12 +154,15 @@ class File(metaclass=MetaFile):
 
 
 class PlayerDataFile(File):
-    pass
+    """Stores the player's inventory and ender chest, as well as other stats,
+    like health, hunger, etc.
+
+    """
 
 
 class StatsFile(File):
-    pass
+    """Stores player's statistics."""
 
 
 class AdvancementsFile(File):
-    pass
+    """Stores players advancements."""

@@ -1,18 +1,21 @@
+"""Exceptions used in `server_manager`."""
+
+
 class ServerManagerError(Exception):
-    pass
+    """Server manager error."""
 
 
 class InvalidServerStateError(ServerManagerError):
-    pass
+    """Invalid server state error."""
 
 
 class InvalidPlayerDataStateError(ServerManagerError):
-    pass
+    """Invalid player data state error."""
 
 
 class InvalidFileError(ServerManagerError):
-    pass
+    """Invalid file error."""
 
 
 class InvalidPlayerError(ServerManagerError):
-    pass
+    """Invalid player error."""
