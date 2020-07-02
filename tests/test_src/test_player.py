@@ -9,13 +9,15 @@ from server_manager.src.exceptions import InvalidPlayerError
 from server_manager.src.files import AdvancementsFile, File, PlayerDataFile, StatsFile
 from server_manager.src.player import Player
 
+# pylint: disable=redefined-outer-name
+
 
 @pytest.fixture
 def player_mocks():
-    gu = mock.patch("server_manager.src.player.get_username").start()
-    gm = mock.patch("server_manager.src.player.get_mode").start()
+    gu_m = mock.patch("server_manager.src.player.get_username").start()
+    gm_m = mock.patch("server_manager.src.player.get_mode").start()
 
-    yield gm, gu
+    yield gm_m, gu_m
 
     mock.patch.stopall()
 
@@ -211,13 +213,13 @@ class TestGenerate:
             def __repr__(self):
                 return str(self)
 
-        self.CustomPlayer = CustomPlayer
+        self.CustomPlayer = CustomPlayer  # pylint: disable=invalid-name
 
         File.uuid_pattern = re.compile(r"<[-\w]+>")
         gf_m = mock.patch("server_manager.src.files.File.gen_files").start()
         pl_m = mock.patch("server_manager.src.player.Player").start()
-        pl_m.side_effect = lambda *x: CustomPlayer(*x)
-        fm_m = mock.patch("server_manager.src.files.File.memory", self.memory).start()
+        pl_m.side_effect = CustomPlayer
+        mock.patch("server_manager.src.files.File.memory", self.memory).start()
 
         yield gf_m, pl_m
 

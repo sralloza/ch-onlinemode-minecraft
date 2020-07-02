@@ -31,7 +31,7 @@ def reset_file_metaclass_attrs():
 class TestMetaFile:
     def test_work(self):
         # Meta.__init__ (declaring base class)
-        class Base(metaclass=MetaFile):
+        class Base(metaclass=MetaFile):  # pylint: disable=R0903
             def __init__(self, number):
                 self.number = number
 
@@ -108,7 +108,7 @@ class TestFile:
         yield wrapped
 
     def test_uuid_pattern(self):
-        test = lambda x: File.uuid_pattern.search(x)
+        test = File.uuid_pattern.search
 
         assert test("00000000-0000-0000-0000-000000000000")
         assert test("550e8400-e29b-41d4-a716-446655440000")
@@ -118,6 +118,7 @@ class TestFile:
         assert not test("invalid-uuid")
 
     def test_init(self):
+        # pylint: disable=invalid-name
         # Not identified
         test_file = File("path")
         assert test_file is None
@@ -158,7 +159,7 @@ class TestFile:
 
         def not_uuid(path):
             with pytest.raises(InvalidFileError):
-                file_creator(path).uuid
+                assert file_creator(path).uuid
             return True
 
         assert test("path/file-00000000-0000-0000-0000-000000000000.json")
@@ -174,12 +175,17 @@ class TestFile:
 
     @mock.patch("pathlib.Path.rename")
     def test_change_uuid(self, rename_m, file_creator, caplog):
-        file = file_creator("file_type/00000000-0000-0000-C000-000000000046.json")
+        caplog.set_level(10, "server_manager.src.files")
+
+        file: File = file_creator("file_type/00000000-0000-0000-C000-000000000046.json")
         new_uuid = "550e8400-e29b-41d4-a716-446655440000"
         file.change_uuid(new_uuid)
 
         expected_path = Path("file_type/550e8400-e29b-41d4-a716-446655440000.json")
         rename_m.assert_called_with(expected_path)
+
+        assert len(caplog.records) == 1
+        assert caplog.records[-1].levelname == "DEBUG"
 
         # In this case, 'foo' shouldn't be there, so File.change_uuid will remove it.
         file = file_creator("file_type/foo-00000000-0000-0000-C000-000000000046.json")
@@ -189,38 +195,45 @@ class TestFile:
         expected_path = Path("file_type/550e8400-e29b-41d4-a716-446655440000.json")
         rename_m.assert_called_with(expected_path)
 
+        assert len(caplog.records) == 2
+        assert caplog.records[-1].levelname == "DEBUG"
+
     def test_identify(self):
         assert File.memory == self.memory
         assert File.subtypes == self.subtypes
 
-        a1 = File.identify("/file/typea/1")
-        a2 = File.identify("/file/typea/2")
-        a3 = File.identify("/file/typea/3")
-        b1 = File.identify("/file/typeb/1")
-        b2 = File.identify("/file/typeb/2")
-        c1 = File.identify("/file/typec/1")
+        file_a1 = File.identify("/file/typea/1")
+        file_a2 = File.identify("/file/typea/2")
+        file_a3 = File.identify("/file/typea/3")
+        file_b1 = File.identify("/file/typeb/1")
+        file_b2 = File.identify("/file/typeb/2")
+        file_c1 = File.identify("/file/typec/1")
         invalid = File.identify("invalid")
 
-        assert isinstance(a1, self.TypeA)
-        assert a1.path == Path("/file/typea/1")
+        assert isinstance(file_a1, self.TypeA)
+        assert file_a1.path == Path("/file/typea/1")
 
-        assert isinstance(a2, self.TypeA)
-        assert a2.path == Path("/file/typea/2")
+        assert isinstance(file_a2, self.TypeA)
+        assert file_a2.path == Path("/file/typea/2")
 
-        assert isinstance(a3, self.TypeA)
-        assert a3.path == Path("/file/typea/3")
+        assert isinstance(file_a3, self.TypeA)
+        assert file_a3.path == Path("/file/typea/3")
 
-        assert isinstance(b1, self.TypeB)
-        assert b1.path == Path("/file/typeb/1")
+        assert isinstance(file_b1, self.TypeB)
+        assert file_b1.path == Path("/file/typeb/1")
 
-        assert isinstance(b2, self.TypeB)
-        assert b2.path == Path("/file/typeb/2")
+        assert isinstance(file_b2, self.TypeB)
+        assert file_b2.path == Path("/file/typeb/2")
 
-        assert isinstance(c1, self.TypeC)
-        assert c1.path == Path("/file/typec/1")
+        assert isinstance(file_c1, self.TypeC)
+        assert file_c1.path == Path("/file/typec/1")
 
         assert invalid is None
-        assert File.memory == {"typea": [a1, a2, a3], "typeb": [b1, b2], "typec": [c1]}
+        assert File.memory == {
+            "typea": [file_a1, file_a2, file_a3],
+            "typeb": [file_b1, file_b2],
+            "typec": [file_c1],
+        }
 
     def test_identify_2(self):
         assert File.memory == self.memory
@@ -232,24 +245,28 @@ class TestFile:
         assert File.memory == {"typea": [], "typeb": [], "typec": []}
 
         # Identify TypeA file
-        f1 = File.identify("/world/typea/00000000-0000-0000-0000-000000000000.json")
-        assert isinstance(f1, self.TypeA)
-        assert File.memory == {"typea": [f1], "typeb": [], "typec": []}
+        file1 = File.identify("/world/typea/00000000-0000-0000-0000-000000000000.json")
+        assert isinstance(file1, self.TypeA)
+        assert File.memory == {"typea": [file1], "typeb": [], "typec": []}
 
         # Identify TypeB file
-        f2 = File.identify("/world/typeb/00000000-0000-0000-0000-000000000000.json")
-        assert isinstance(f2, self.TypeB)
-        assert File.memory == {"typea": [f1], "typeb": [f2], "typec": []}
+        file2 = File.identify("/world/typeb/00000000-0000-0000-0000-000000000000.json")
+        assert isinstance(file2, self.TypeB)
+        assert File.memory == {"typea": [file1], "typeb": [file2], "typec": []}
 
         # Identify TypeC file
-        f3 = File.identify("/world/typec/00000000-0000-0000-0000-000000000000.json")
-        assert isinstance(f3, self.TypeC)
-        assert File.memory == {"typea": [f1], "typeb": [f2], "typec": [f3]}
+        file3 = File.identify("/world/typec/00000000-0000-0000-0000-000000000000.json")
+        assert isinstance(file3, self.TypeC)
+        assert File.memory == {"typea": [file1], "typeb": [file2], "typec": [file3]}
 
         # Identify another TypeA file
-        f4 = File.identify("/world/typea/01234567-89ab-cdef-0123-456789abcdef.json")
-        assert isinstance(f1, self.TypeA)
-        assert File.memory == {"typea": [f1, f4], "typeb": [f2], "typec": [f3]}
+        file4 = File.identify("/world/typea/01234567-89ab-cdef-0123-456789abcdef.json")
+        assert isinstance(file1, self.TypeA)
+        assert File.memory == {
+            "typea": [file1, file4],
+            "typeb": [file2],
+            "typec": [file3],
+        }
 
     @mock.patch("os.walk")
     def test_gen_files(self, walk_m):
