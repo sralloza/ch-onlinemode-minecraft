@@ -9,7 +9,6 @@ import logging
 from io import StringIO
 
 import pandas as pd
-import pyperclip
 
 logger = logging.getLogger(__name__)
 
@@ -91,19 +90,6 @@ def get_dataframe() -> pd.DataFrame:
     return _DF.copy()
 
 
-def excel_to_b64(excel_path: str):
-    """Prints and copies to clipboard the base64 representation of the
-    excel as a csv.
 
-    Args:
-        excel_path (str): filepath of the excel file.
-    """
 
-    dataframe = pd.read_excel(excel_path)
-    dataframe.set_index("uuid", inplace=True)
 
-    bytes_df = dataframe.to_csv(index="uuid").encode()
-
-    b64data = base64.b64encode(bytes_df).decode()
-    print(b64data)
-    pyperclip.copy(b64data)

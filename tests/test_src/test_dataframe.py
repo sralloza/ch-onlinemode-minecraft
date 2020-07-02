@@ -1,5 +1,3 @@
-import pytest
-
 from server_manager.src.dataframe import _DF as df
 from server_manager.src.dataframe import get_dataframe, get_mode, get_username, get_uuid
 
@@ -38,8 +36,3 @@ def test_get_dataframe():
     df2 = get_dataframe()
     assert df2.equals(df)
     assert df2 is not df
-
-
-@pytest.mark.skip
-def test_excel_to_b64():
-    assert 0
