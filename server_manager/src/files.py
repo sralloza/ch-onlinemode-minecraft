@@ -4,12 +4,12 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 from server_manager.src.exceptions import InvalidFileError
 
 logger = logging.getLogger(__name__)
-DataFile = Type["Player"]
+DataFile = Type["File"]
 
 
 class MetaFile(type):
@@ -115,7 +115,7 @@ class File(metaclass=MetaFile):
         return True
 
     @classmethod
-    def identify(cls, path: Union[str, Path]) -> DataFile:
+    def identify(cls, path: Union[str, Path]) -> Optional[DataFile]:
         """Identifies the type of player data that `path` stores.
 
         Args:
@@ -130,6 +130,8 @@ class File(metaclass=MetaFile):
         for subtype in cls.subtypes:
             if subtype in path:
                 return cls.subtypes[subtype](path)
+
+        # TODO: raise exception if file is not identified
         return None
 
     @classmethod
