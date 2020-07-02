@@ -34,11 +34,9 @@ def ensure_mode(online):
         raise ValueError(msg)
 
 
-
 def set_onlinemode(online_mode):
     # ensure_mode(not online_mode)
     mode_players = df[df.online == online_mode]
-
 
     for uuid in mode_players.index:
         for root, dirs, files in os.walk(PENDRIVE_PATH):
@@ -47,7 +45,9 @@ def set_onlinemode(online_mode):
                 if uuid in file.as_posix():
                     username = df.loc[uuid, "username"]
 
-                    other_mode_uuid = df.loc[(df.username == username) & (df.online == online_mode)].index[0]
+                    other_mode_uuid = df.loc[
+                        (df.username == username) & (df.online == online_mode)
+                    ].index[0]
                     print(uuid, other_mode_uuid, username)
                     # new_name = file.as_poxis().replace(uuid, )
                     print(file)

@@ -187,7 +187,6 @@ class TestGenerate:
 
         # File.subtypes = cls.subtypes
 
-
         # cls.Base = Base
         cls.TypeA = TypeA
         cls.TypeB = TypeB

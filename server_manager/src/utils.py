@@ -5,6 +5,7 @@ import argparse
 
 class Memory:
     """Class to store the parser."""
+
     _parser = None
 
     @classmethod
