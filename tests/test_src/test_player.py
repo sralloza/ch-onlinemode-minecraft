@@ -254,4 +254,3 @@ class TestGenerate:
         assert players == expected
         pl_m.assert_called()
         assert pl_m.call_count == 3
-
