@@ -3,20 +3,6 @@
 import argparse
 
 
-class Memory:
-    """Class to store the parser."""
-
-    _parser = None
-
-    @classmethod
-    def set_parser(cls, parser):
-        cls._parser = parser
-
-    @classmethod
-    def get_parser(cls):
-        return cls._parser
-
-
 def bool2str(boolean: bool):
     """Returns a bool as a string (in lowercase, as json).
 
