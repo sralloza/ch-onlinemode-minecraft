@@ -1,3 +1,7 @@
+"""Manages the properties of the minecraft server (`server.properties`),
+especially `online-mode`.
+"""
+
 import os
 import re
 import sys
@@ -6,7 +10,9 @@ from typing import Union
 
 from colorama import Fore
 
-from .utils import Memory, bool2str, str2bool
+from server_manager.src.exceptions import InvalidServerStateError
+
+from .utils import bool2str, str2bool
 
 ONLINE_MODE_PATTERN: re.Pattern = re.compile(r"(online-mode=)(\w+)", re.IGNORECASE)
 DATA_PATH = Path(__file__).parent.joinpath("data/server-path.txt")
@@ -32,6 +38,13 @@ def get_server_path() -> Path:
 
 
 def validate_server_path(server_path: Union[str, Path]):
+    """Validates the `server_path`, ensuring that the server.properties file
+    does exist inside the `server_path`.
+
+    Args:
+        server_path (Union[str, Path]): server path.
+    """
+
     server_path = Path(server_path)
     properties_path = get_server_properties_filepath(server_path)
     if not properties_path.exists():
@@ -42,6 +55,16 @@ def validate_server_path(server_path: Union[str, Path]):
 
 
 def get_server_properties_filepath(server_path=None) -> Path:
+    """Returns the path of the server properties file (`server.properties`).
+
+    Args:
+        server_path (str, optional): server path. If None, the server path will
+            be obtained by get_server_path(). Defaults to None.
+
+    Returns:
+        Path: server properties file path.
+    """
+
     if not server_path:
         server_path = get_server_path()
     return Path(server_path).joinpath("server.properties")
@@ -54,6 +77,9 @@ def properties_manager(online_mode=None):
         online_mode (bool, optional): If not passed or None, it will return the current
             online-mode. Otherwise, the server online-mode will be set to `online-mode`
             and the `online-mode` is returned for consistency reasons. Defaults to None.
+
+    Raises:
+        InvalidServerStateError: if `online_mode` is equal to the current online mode.
 
     Returns:
         bool: server new online mode.
@@ -69,10 +95,9 @@ def properties_manager(online_mode=None):
         return current_online_mode
 
     if online_mode == current_online_mode:
-        Memory.get_parser().error(
+        raise InvalidServerStateError(
             f"online-mode is already set to {current_online_mode}"
         )
-        sys.exit()
 
     changed_file_data = ONLINE_MODE_PATTERN.sub(
         r"\1" + bool2str(online_mode), file_data
@@ -82,8 +107,23 @@ def properties_manager(online_mode=None):
 
 
 def set_server_mode(online_mode: bool):
+    """Sets the server mode to `online_mode`.
+
+    Args:
+        online_mode (bool): new online mode to set.
+
+    Returns:
+        bool: current online mode after change.
+    """
+
     return properties_manager(online_mode=online_mode)
 
 
 def get_server_mode() -> bool:
+    """Returns the current server mode.
+
+    Returns:
+        bool: current server mode.
+    """
+
     return properties_manager(online_mode=None)

@@ -1,6 +1,8 @@
+"""Checkers needed before setting a new mode."""
+
+from itertools import groupby
 import logging
 import sys
-from itertools import groupby
 from typing import List
 
 from .dataframe import get_mode, get_username, get_uuid
@@ -10,21 +12,41 @@ from .properties_manager import get_server_mode, get_server_path, set_server_mod
 
 
 def group_players(iterable, key=None):
+    """Groups player.
+
+    Args:
+        iterable (List[Player]): list of players to group.
+        key (callable, optional): function to group the players by. Defaults
+            to None, which means that the players will be grouped by username.
+
+    Returns:
+        [type]: [description]
+    """
+
     if not key:
         key = lambda x: x.username
     return [(x, list(y)) for x, y in groupby(iterable, key)]
 
 
-def fix_players(players):
-    current_server_mode = get_server_mode()
+def fix_players(players: List[Player]):
+    """If some player has an data file with an invalid id, that file
+    will be removed if its inventory and its ender chest is emtpy.
 
-    for username, subplayers in group_players(players):
-        print(username, subplayers)
-    sys.exit()
+    Args:
+        players (List[Players]): list of players to fix?
+    """
+
+    raise NotImplementedError
+
+    # current_server_mode = get_server_mode()
+
+    # for username, subplayers in group_players(players):
+    #     print(username, subplayers)
+    # sys.exit()
 
 
 def check_players(players: List[Player]):
-    """It checks the current files are ok.
+    """Checks the current files are ok.
 
     Args:
         players (List[Player]): list of players detected.
@@ -70,6 +92,17 @@ def check_players(players: List[Player]):
 
 
 def set_mode(mode=None):
+    """Modifies the online mode of the minecraft server.
+
+    Args:
+        mode (bool, optional): new online mode to set. Defaults to None.
+
+    Raises:
+        InvalidServerStateError: if the server is already running with `mode`.
+        InvalidPlayerDataStateError: if some player has data with a mode
+            different than the one in which the server is running.
+    """
+
     logger = logging.getLogger(__name__)
     server_path = get_server_path()
     current_servermode = get_server_mode()

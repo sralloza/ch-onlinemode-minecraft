@@ -99,10 +99,10 @@ def excel_to_b64(excel_path: str):
         excel_path (str): filepath of the excel file.
     """
 
-    df = pd.read_excel(excel_path)
-    df.set_index("uuid", inplace=True)
+    dataframe = pd.read_excel(excel_path)
+    dataframe.set_index("uuid", inplace=True)
 
-    bytes_df = df.to_csv(index="uuid").encode()
+    bytes_df = dataframe.to_csv(index="uuid").encode()
 
     b64data = base64.b64encode(bytes_df).decode()
     print(b64data)

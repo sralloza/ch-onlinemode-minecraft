@@ -1,9 +1,3 @@
-import base64
-import logging
-from io import StringIO
-
-import pandas as pd
-import pyperclip
 import pytest
 
 from server_manager.src.dataframe import _DF as df
@@ -47,5 +41,5 @@ def test_get_dataframe():
 
 
 @pytest.mark.skip
-def test_excel_to_b64(excel_path: str):
+def test_excel_to_b64():
     assert 0

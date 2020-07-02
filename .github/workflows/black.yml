@@ -1,0 +1,30 @@
+name: lint-black
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Lint with black module
+        run: |
+          black --diff --check server_manager
+      - name: Lint with black tests
+        run: |
+          black --diff --check tests

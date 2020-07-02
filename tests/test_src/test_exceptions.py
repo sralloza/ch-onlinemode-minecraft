@@ -44,6 +44,7 @@ class TestInvalidFileError:
         with pytest.raises(InvalidFileError):
             raise InvalidFileError
 
+
 class TestInvalidPlayerError:
     def test_inheritance(self):
         assert issubclass(InvalidPlayerError, ServerManagerError)
