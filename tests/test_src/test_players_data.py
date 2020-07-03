@@ -8,11 +8,15 @@ from server_manager.src.players_data import (
     get_players_data,
     get_username,
     get_uuid,
+    CSV_PATH,
 )
 from server_manager.src.exceptions import SearchError
 
 
 def test_get_players_data():
+    assert CSV_PATH.exists()
+    assert CSV_PATH.is_file()
+
     players_data = get_players_data()
 
     for player in players_data:
