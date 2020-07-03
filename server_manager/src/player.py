@@ -121,6 +121,13 @@ class Player:
 
         return self.get_nbt_data()["EnderItems"]
 
+    def remove(self):
+        """Removes all files containing player's data."""
+
+        self.player_data_file.remove()
+        self.stats_file.remove()
+        self.advancements_file.remove()
+
     @classmethod
     def generate(cls, root_path: Path = None) -> List["Player"]:
         """Scans the root path and returns the list of players found in the

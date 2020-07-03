@@ -60,6 +60,12 @@ class TestMetaFile:
         assert Base.memory == {"child1": [c11, c12, c13], "child2": [c21, c22]}
         assert Base.subtypes == {"child1": Child1, "child2": Child2}
 
+        assert repr(c11) == "Child1(11)"
+        assert repr(c12) == "Child1(12)"
+        assert repr(c13) == "Child1(13)"
+        assert repr(c21) == "Child2(21)"
+        assert repr(c22) == "Child2(22)"
+
         # Some mix
         class Child3(Base):
             pass
@@ -284,28 +290,20 @@ class TestFile:
 
     @mock.patch("os.walk")
     def test_gen_files(self, walk_m):
+        zeros = "00000000-0000-0000-0000-0000000000"
         walk = (
             ("./", ["typea", "typeb", "typec", "hidden"], []),
             (
                 "./typea",
                 [],
-                [
-                    "00000000-0000-0000-0000-0000000000a1.json",
-                    "00000000-0000-0000-0000-0000000000a2.json",
-                    "00000000-0000-0000-0000-0000000000a3.json",
-                ],
+                [zeros + "a1.json", zeros + "a2.json", zeros + "a3.json",],
             ),
-            (
-                "./typeb",
-                [],
-                [
-                    "00000000-0000-0000-0000-0000000000b1.json",
-                    "00000000-0000-0000-0000-0000000000b2.json",
-                ],
-            ),
-            ("./hidden", ["typec"], []),
-            ("./hidden/typec", [], ["00000000-0000-0000-0000-0000000000c1.json"]),
+            ("./typeb", [], [zeros + "b1.json", zeros + "b2.json",],),
+            ("./hidden", ["typec", "invalid-type"], []),
+            ("./hidden/invalid-type", [], ["a.pdf", "b.pdf", "c.pdf"]),
+            ("./hidden/typec", [], [zeros + "c1.json"]),
         )
+
         walk_m.return_value = walk
         files = File.gen_files(Path("./"))
 
