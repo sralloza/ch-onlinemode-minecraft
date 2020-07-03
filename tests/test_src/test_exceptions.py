@@ -5,6 +5,7 @@ from server_manager.src.exceptions import (
     InvalidPlayerDataStateError,
     InvalidPlayerError,
     InvalidServerStateError,
+    SearchError,
     ServerManagerError,
 )
 
@@ -43,6 +44,15 @@ class TestInvalidFileError:
     def test_raises(self):
         with pytest.raises(InvalidFileError):
             raise InvalidFileError
+
+
+class TestSearchError:
+    def test_inheritance(self):
+        assert issubclass(SearchError, ServerManagerError)
+
+    def test_raises(self):
+        with pytest.raises(SearchError):
+            raise SearchError
 
 
 class TestInvalidPlayerError:
