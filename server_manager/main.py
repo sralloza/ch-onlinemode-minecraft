@@ -6,7 +6,7 @@ from typing import Dict, NoReturn
 
 from server_manager.src.exceptions import InvalidServerStateError
 
-from .src.dataframe import get_players_data, get_mode
+from .src.players_data import get_players_data, get_mode
 from .src.files import File
 from .src.player import Player
 from .src.set_mode import set_mode

@@ -94,8 +94,6 @@ def get_mode(uuid) -> bool:
     raise SearchError("No player found with uuid=%s" % uuid)
 
 
-# TODO: rename get_players_data → read_excel
-# TODO: rename dataframe.py → excel_manager.py or something like that, containing "excel"
 def get_players_data() -> List[PlayerInterface]:
     """Reads the excel and returns the players uuids and usernames.
 

@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import List
 
-from .dataframe import get_mode, get_username
+from .players_data import get_mode, get_username
 from .exceptions import InvalidPlayerError
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
 from .properties_manager import get_server_path

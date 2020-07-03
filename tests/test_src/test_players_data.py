@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from server_manager.src.dataframe import (
+from server_manager.src.players_data import (
     get_mode,
     get_players_data,
     get_username,
@@ -37,7 +37,7 @@ def test_get_uuid_ok():
     assert get_uuid("SrAlloza", False) == "be17640b-8471-321e-a355-d2a2859ebda1"
 
 
-@mock.patch("server_manager.src.dataframe.get_players_data")
+@mock.patch("server_manager.src.players_data.get_players_data")
 def test_get_uuid_fatal(gpd_m):
     gpd_m.return_value = []
 
@@ -50,7 +50,7 @@ def test_get_username():
     assert get_username("be17640b-8471-321e-a355-d2a2859ebda1") == "SrAlloza"
 
 
-@mock.patch("server_manager.src.dataframe.get_players_data")
+@mock.patch("server_manager.src.players_data.get_players_data")
 def test_get_username_fatal(gpd_m):
     gpd_m.return_value = []
 
@@ -63,7 +63,7 @@ def test_get_mode():
     assert get_mode("be17640b-8471-321e-a355-d2a2859ebda1") is False
 
 
-@mock.patch("server_manager.src.dataframe.get_players_data")
+@mock.patch("server_manager.src.players_data.get_players_data")
 def test_get_mode_fatal(gpd_m):
     gpd_m.return_value = []
 
