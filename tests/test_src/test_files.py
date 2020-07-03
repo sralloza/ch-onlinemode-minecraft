@@ -169,6 +169,20 @@ class TestFile:
         assert not_uuid("/var/invalid/xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx.invalid")
         assert not_uuid("/home/user/test/invalid-uuid.png")
 
+    @mock.patch("pathlib.Path.read_bytes")
+    def test_read_bytes(self, read_m, file_creator):
+        read_m.return_value = b"binary data"
+        file = file_creator("/path/to/file.ext")
+
+        assert file.read_bytes() == b"binary data"
+        read_m.assert_called_once_with()
+
+    @mock.patch("pathlib.Path.unlink")
+    def test_remove(self, unlink_m, file_creator):
+        file = file_creator("/path/to/file.ext")
+        file.remove()
+        unlink_m.assert_called_once_with()
+
     def test_as_posix(self, file_creator):
         file = file_creator("/path/to/file.ext")
         assert file.as_posix() == "/path/to/file.ext"

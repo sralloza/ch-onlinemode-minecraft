@@ -2,8 +2,8 @@
 
 import logging
 import os
-import re
 from pathlib import Path
+import re
 from typing import Optional, Type, Union
 
 from server_manager.src.exceptions import InvalidFileError
@@ -88,6 +88,20 @@ class File(metaclass=MetaFile):
             return self.uuid_pattern.search(self.path.as_posix()).group()
         except AttributeError:
             raise InvalidFileError(f"{self.path} does not contain a uuid")
+
+    def read_bytes(self) -> bytes:
+        """Returns the file content in bytes.
+
+        Returns:
+            bytes: file content.
+        """
+
+        return self.path.read_bytes()
+
+    def remove(self):
+        """Removes the actual file from the file system."""
+
+        self.path.unlink()
 
     def as_posix(self) -> str:
         """Returns its file path.
