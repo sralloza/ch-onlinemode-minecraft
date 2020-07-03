@@ -1,7 +1,6 @@
 colorama
 nbtlib
 numpy
-pandas
 pyperclip
 requests
 xlrd

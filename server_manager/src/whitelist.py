@@ -1,7 +1,7 @@
 """Manages server whitelist."""
 import json
 
-from .dataframe import get_dataframe
+from .dataframe import get_players_data
 
 
 def create_whitelist() -> str:
@@ -11,9 +11,11 @@ def create_whitelist() -> str:
     Returns:
         str: whitelist as str. Must be written to a file named `whitelist.json`.
     """
-    dataframe = get_dataframe()
+
+    players_data = get_players_data()
     whitelist = []
-    for uuid, player in dataframe.iterrows():
-        whitelist.append({"uuid": uuid, "name": player.username})
+
+    for player in players_data:
+        whitelist.append({"uuid": player.uuid, "name": player.username})
 
     return json.dumps(whitelist, indent=4, ensure_ascii=False,)

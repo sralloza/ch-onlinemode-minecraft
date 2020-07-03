@@ -1,25 +1,48 @@
-from server_manager.src.dataframe import _DF as df
-from server_manager.src.dataframe import get_dataframe, get_mode, get_username, get_uuid
+from itertools import groupby
+from unittest import mock
+
+import pytest
+
+from server_manager.src.dataframe import (
+    get_mode,
+    get_players_data,
+    get_username,
+    get_uuid,
+)
+from server_manager.src.exceptions import SearchError
 
 
-def test_dataframe():
-    for username, group in df.groupby("username"):
+def test_get_players_data():
+    players_data = get_players_data()
+
+    for player in players_data:
+        assert hasattr(player, "uuid")
+        assert hasattr(player, "username")
+        assert hasattr(player, "online")
+
+    for username, group in groupby(players_data, lambda x: x.username):
+        group = list(group)
         assert len(group) == 2
-        first = group.iloc[0]
-        second = group.iloc[1]
 
-        assert first.name != second.name
+        first, second = group
+
         assert first.username == second.username == username
+        assert first.uuid != second.uuid
         assert first.online != second.online
         assert first.online == (not second.online)
 
-    assert df.index.name == "uuid"
-    assert list(df.columns) == ["username", "online"]
 
-
-def test_get_uuid():
+def test_get_uuid_ok():
     assert get_uuid("SrAlloza", True) == "4a618768-4f26-4688-8ab5-6e64f250c62f"
     assert get_uuid("SrAlloza", False) == "be17640b-8471-321e-a355-d2a2859ebda1"
+
+
+@mock.patch("server_manager.src.dataframe.get_players_data")
+def test_get_uuid_fatal(gpd_m):
+    gpd_m.return_value = []
+
+    with pytest.raises(SearchError):
+        get_uuid("someone", True)
 
 
 def test_get_username():
@@ -27,12 +50,22 @@ def test_get_username():
     assert get_username("be17640b-8471-321e-a355-d2a2859ebda1") == "SrAlloza"
 
 
+@mock.patch("server_manager.src.dataframe.get_players_data")
+def test_get_username_fatal(gpd_m):
+    gpd_m.return_value = []
+
+    with pytest.raises(SearchError):
+        get_username("some-id")
+
+
 def test_get_mode():
     assert get_mode("4a618768-4f26-4688-8ab5-6e64f250c62f") is True
     assert get_mode("be17640b-8471-321e-a355-d2a2859ebda1") is False
 
 
-def test_get_dataframe():
-    df2 = get_dataframe()
-    assert df2.equals(df)
-    assert df2 is not df
+@mock.patch("server_manager.src.dataframe.get_players_data")
+def test_get_mode_fatal(gpd_m):
+    gpd_m.return_value = []
+
+    with pytest.raises(SearchError):
+        get_mode("some-id")

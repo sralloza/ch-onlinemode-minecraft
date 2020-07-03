@@ -6,7 +6,7 @@ from typing import Dict, NoReturn
 
 from server_manager.src.exceptions import InvalidServerStateError
 
-from .src.dataframe import get_dataframe, get_mode
+from .src.dataframe import get_players_data, get_mode
 from .src.files import File
 from .src.player import Player
 from .src.set_mode import set_mode
@@ -64,7 +64,8 @@ def main():
         sys.exit()
 
     if command == "data":
-        print(get_dataframe())
+        for player in get_players_data():
+            print("-", player)
         sys.exit()
 
     if command == "list":
