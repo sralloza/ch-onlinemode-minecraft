@@ -9,9 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from xlrd import open_workbook
-
 from server_manager.src.exceptions import SearchError
+
+CSV_PATH = Path(__file__).with_name("players-data.csv").absolute()
 
 
 @dataclass
@@ -102,20 +102,12 @@ def get_players_data() -> List[PlayerInterface]:
             one with online=True and one with online=False.
     """
 
-    excel_path = Path(__file__).with_name("players-data.xlsx").absolute()
+    data = iter(CSV_PATH.read_text().splitlines())
+    next(data)  # remove the header
+    players = []
 
-    workbook = open_workbook(excel_path.as_posix())
-
-    worksheet = workbook.sheet_by_index(0)
-    first_row = []
-
-    for col in range(worksheet.ncols):
-        first_row.append(worksheet.cell_value(0, col))
-
-    data = []
-    for row in range(1, worksheet.nrows):
-        record = {}
-        for col in range(worksheet.ncols):
-            record[first_row[col]] = str(worksheet.cell_value(row, col)).strip()
-        data.append(PlayerInterface(**record))
-    return data
+    for line in data:
+        username, uuid, online = line.split(",")
+        online = literal_eval(online)
+        players.append(PlayerInterface(username, uuid, online))
+    return players
