@@ -1,2 +1,3 @@
 include versioneer.py
 include server_manager/_version.py
+include server_manager/src/players-data.xlsx
