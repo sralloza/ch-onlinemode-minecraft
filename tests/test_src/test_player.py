@@ -168,6 +168,105 @@ def test_change_uuid(player_mocks):
     af_m.change_uuid.assert_called_once_with("<new-uuid>")
 
 
+def test_get_nbt_data(player_mocks):
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    pdf_m = mock.MagicMock()
+    pdf_m.read_bytes.return_value = (
+        Path(__file__).with_name("nbt-example.dat").read_bytes()
+    )
+    sf_m = mock.MagicMock()
+    af_m = mock.MagicMock()
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+    player.player_data_file = pdf_m
+    player.stats_file = sf_m
+    player.advancements_file = af_m
+
+    nbt_data = player.get_nbt_data()
+    assert len(nbt_data) == 38
+    assert nbt_data["AbsorptionAmount"] == 0
+    assert nbt_data["DataVersion"] == 1343
+    assert nbt_data["DeathTime"] == 6650
+    assert nbt_data["Dimension"] == 0
+    assert nbt_data["EnderItems"] == []
+    assert nbt_data["Fire"] == -20
+    assert nbt_data["HurtByTimestamp"] == 4920
+    assert nbt_data["Inventory"] == []
+    assert nbt_data["Motion"][0] == 0
+    assert nbt_data["Motion"][1] == -0.0784000015258789
+    assert nbt_data["Motion"][2] == 0
+    assert nbt_data["OnGround"] == 1
+    assert nbt_data["PortalCooldown"] == 0
+    assert nbt_data["foodLevel"] == 16
+    assert nbt_data["seenCredits"] == 0
+
+    pdf_m.read_bytes.assert_called_once_with()
+
+
+@mock.patch("server_manager.src.player.Player.get_nbt_data")
+def test_get_inventory(gnbtd_m, player_mocks):
+    gnbtd_m.return_value = {"Inventory": "<inventory>"}
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+
+    assert player.get_inventory() == "<inventory>"
+
+
+@mock.patch("server_manager.src.player.Player.get_nbt_data")
+def test_get_ender_chest(gnbtd_m, player_mocks):
+    gnbtd_m.return_value = {"EnderItems": "<ender-items>"}
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+
+    assert player.get_ender_chest() == "<ender-items>"
+
+
+def test_remove(player_mocks):
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    pdf_m = mock.MagicMock()
+    sf_m = mock.MagicMock()
+    af_m = mock.MagicMock()
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+    player.player_data_file = pdf_m
+    player.stats_file = sf_m
+    player.advancements_file = af_m
+
+    player.remove()
+
+    pdf_m.remove.assert_called_once_with()
+    sf_m.remove.assert_called_once_with()
+    af_m.remove.assert_called_once_with()
+
+
 class TestGenerate:
     @classmethod
     def setup_class(cls):
@@ -194,7 +293,7 @@ class TestGenerate:
         cls.TypeB = TypeB
         cls.TypeC = TypeC
 
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def mocks(self):
         class CustomPlayer:
             def __init__(self, uuid, *files):
@@ -214,22 +313,30 @@ class TestGenerate:
                 return str(self)
 
         self.CustomPlayer = CustomPlayer  # pylint: disable=invalid-name
+        assert str(CustomPlayer(1, 2, 3)) == "CustomPlayer(uuid=1, files=(2, 3))"
+        assert repr(CustomPlayer(1, 2, 3)) == "CustomPlayer(uuid=1, files=(2, 3))"
 
         File.uuid_pattern = re.compile(r"<[-\w]+>")
-        gf_m = mock.patch("server_manager.src.files.File.gen_files").start()
-        pl_m = mock.patch("server_manager.src.player.Player").start()
-        pl_m.side_effect = CustomPlayer
+        self.gf_m = mock.patch("server_manager.src.files.File.gen_files").start()
+        self.pl_m = mock.patch("server_manager.src.player.Player").start()
+        self.pl_m.side_effect = CustomPlayer
+        self.gsp_m = mock.patch("server_manager.src.player.get_server_path").start()
+        self.gsp_m.return_value = Path("root")
         mock.patch("server_manager.src.files.File.memory", self.memory).start()
 
-        yield gf_m, pl_m
+        yield
 
         mock.patch.stopall()
 
-    def test_ok(self, mocks):
-        gf_m, pl_m = mocks
+    @pytest.mark.parametrize("root_path", [None, Path("root")])
+    def test_ok(self, root_path):
+        players = Player.generate(root_path)
+        self.gf_m.assert_called_once_with(Path("root"))
 
-        players = Player.generate(Path("root"))
-        gf_m.assert_called_once_with(Path("root"))
+        if root_path:
+            self.gsp_m.assert_not_called()
+        else:
+            self.gsp_m.assert_called_once_with()
 
         assert len(players) == 3
         expected = [
@@ -254,5 +361,5 @@ class TestGenerate:
         ]
 
         assert players == expected
-        pl_m.assert_called()
-        assert pl_m.call_count == 3
+        self.pl_m.assert_called()
+        assert self.pl_m.call_count == 3

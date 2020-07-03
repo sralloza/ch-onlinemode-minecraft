@@ -1,13 +1,17 @@
 """Contains player related code."""
 
-from collections import defaultdict
+import gzip
 import logging
+from collections import defaultdict
+from io import BytesIO
 from pathlib import Path
 from typing import List
 
-from .players_data import get_mode, get_username
+import nbtlib
+
 from .exceptions import InvalidPlayerError
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
+from .players_data import get_mode, get_username
 from .properties_manager import get_server_path
 
 
@@ -85,6 +89,44 @@ class Player:
         self.player_data_file.change_uuid(new_uuid)
         self.stats_file.change_uuid(new_uuid)
         self.advancements_file.change_uuid(new_uuid)
+
+    def get_nbt_data(self) -> nbtlib.tag.Compound:
+        """Returns the data stored in the player data file with nbt format.
+
+        Returns:
+            nbtlib.tag.Compound: player data.
+        """
+
+        nbt_bytes = self.player_data_file.read_bytes()
+        buff = BytesIO(nbt_bytes)
+        buff = gzip.GzipFile(fileobj=buff)
+
+        return dict(nbtlib.File.from_fileobj(buff, "big"))[""]
+
+    def get_inventory(self) -> nbtlib.tag.List[nbtlib.tag.Compound]:
+        """Returns the current items in the player's inventory.
+
+        Returns:
+            nbtlib.tag.List[nbtlib.tag.Compound]: items in the player's inventory.
+        """
+
+        return self.get_nbt_data()["Inventory"]
+
+    def get_ender_chest(self) -> nbtlib.tag.List[nbtlib.tag.Compound]:
+        """Returns the current items in the player's ender chest.
+
+        Returns:
+            nbtlib.tag.List[nbtlib.tag.Compound]: items in the player's ender chest.
+        """
+
+        return self.get_nbt_data()["EnderItems"]
+
+    def remove(self):
+        """Removes all files containing player's data."""
+
+        self.player_data_file.remove()
+        self.stats_file.remove()
+        self.advancements_file.remove()
 
     @classmethod
     def generate(cls, root_path: Path = None) -> List["Player"]:
