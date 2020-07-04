@@ -1,16 +1,16 @@
 """Module interface with the command line."""
 
-import sys
 from argparse import ArgumentParser
 from typing import Dict, NoReturn
 
-from server_manager.src.exceptions import InvalidServerStateError
+from .src.exceptions import InvalidServerStateError
 
 from .src.players_data import get_players_data, get_mode
 from .src.files import File
 from .src.player import Player
 from .src.set_mode import set_mode
 from .src.utils import str2bool
+from .src.whitelist import update_whitelist
 
 
 class Parser:
@@ -46,7 +46,7 @@ class Parser:
         return vars(parser.parse_args())
 
 
-def main():
+def main():  # pylint: disable=inconsistent-return-statements
     """Main function."""
 
     args = Parser.parse_args()
@@ -61,12 +61,12 @@ def main():
             Parser.error(" ".join(exc.args))
 
         print(f"Set online-mode to {online_mode}")
-        sys.exit()
+        return
 
     if command == "data":
         for player in get_players_data():
             print("-", player)
-        sys.exit()
+        return
 
     if command == "list":
         players = Player.generate()
@@ -81,10 +81,14 @@ def main():
             format_data = tuple([x for y in zip(lengths, row) for x in y])
             print(" - %-*s - %-*s - %*s" % format_data)
 
-        sys.exit()
+        return
 
     if command == "debug-files":
         Player.generate()
         for key in File.memory:
             for file in File.memory[key]:
                 print(file)
+        return
+
+    if command == "whitelist":
+        return update_whitelist()
