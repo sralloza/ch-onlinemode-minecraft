@@ -3,11 +3,9 @@
 from argparse import ArgumentParser
 from typing import Dict, NoReturn
 
-from .src.exceptions import InvalidServerStateError
-
-from .src.players_data import get_players_data, get_mode
 from .src.files import File
 from .src.player import Player
+from .src.players_data import get_mode, get_players_data
 from .src.set_mode import set_mode
 from .src.utils import str2bool
 from .src.whitelist import update_whitelist
@@ -31,7 +29,7 @@ class Parser:
             Dict[str, str]: arguments parsed.
         """
 
-        parser = ArgumentParser("online-mode-manager")
+        parser = ArgumentParser("server-manager")
         subparsers = parser.add_subparsers(dest="command")
 
         online_mode_parser = subparsers.add_parser("online-mode")
@@ -42,7 +40,7 @@ class Parser:
         subparsers.add_parser("data")
         subparsers.add_parser("whitelist")
 
-        cls._parser = parser
+        cls.parser = parser
         return vars(parser.parse_args())
 
 
@@ -54,25 +52,21 @@ def main():  # pylint: disable=inconsistent-return-statements
 
     if command == "online-mode":
         online_mode = args["online-mode"]
-
-        try:
-            set_mode(mode=online_mode)
-        except InvalidServerStateError as exc:
-            Parser.error(" ".join(exc.args))
+        set_mode(mode=online_mode)
 
         print(f"Set online-mode to {online_mode}")
         return
 
     if command == "data":
         for player in get_players_data():
-            print("-", player)
+            print(" -", player)
         return
 
     if command == "list":
         players = Player.generate()
         data = []
         for player in players:
-            mode = "online" if get_mode(player.uuid) else "offine"
+            mode = "online" if get_mode(player.uuid) else "offline"
             data.append((player.username, mode, player.uuid))
 
         lengths = [max([len(k[x]) for k in data]) for x in range(len(data[0]))]
@@ -92,3 +86,5 @@ def main():  # pylint: disable=inconsistent-return-statements
 
     if command == "whitelist":
         return update_whitelist()
+
+    return Parser.error("Must select command")
