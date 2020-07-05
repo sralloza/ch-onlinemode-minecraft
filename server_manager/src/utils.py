@@ -6,6 +6,12 @@ import argparse
 def bool2str(boolean: bool):
     """Returns a bool as a string (in lowercase, as json).
 
+    Ussage:
+        >>> bool2str(True)
+        'true'
+        >>> bool2str(False)
+        'false'
+
     Args:
         boolean (bool): input bool.
 
@@ -44,7 +50,9 @@ def str2bool(string: str, parser=False):
 
     if isinstance(string, bool):
         return string
-    if string.lower() in ("yes", "true", "t", "y", "1"):
+
+    string = str(string)
+    if string.lower() in ("yes", "true", "t", "y", "1", "sí", "si", "s"):
         return True
     if string.lower() in ("no", "false", "f", "n", "0"):
         return False
