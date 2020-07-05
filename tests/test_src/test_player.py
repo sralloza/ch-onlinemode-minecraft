@@ -174,9 +174,8 @@ def test_get_nbt_data(player_mocks):
     gu_m.return_value = "<username>"
 
     pdf_m = mock.MagicMock()
-    pdf_m.read_bytes.return_value = (
-        Path(__file__).with_name("nbt-example.dat").read_bytes()
-    )
+    nbt_path = Path(__file__).parent.parent.joinpath("test_data/nbt-example.dat")
+    pdf_m.read_bytes.return_value = nbt_path.read_bytes()
     sf_m = mock.MagicMock()
     af_m = mock.MagicMock()
 
