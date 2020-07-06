@@ -64,6 +64,11 @@ class TestParseArgs:
         assert result["command"] == "whitelist"
         assert len(result) == 1
 
+    def test_reset_players(self):
+        result = self.set_args("reset-players")
+        assert result["command"] == "reset-players"
+        assert len(result) == 1
+
     def test_no_command(self):
         result = self.set_args("")
         assert result["command"] is None
@@ -132,7 +137,7 @@ class TestMain:
 
         self.parse_args_m.assert_called_once_with()
         self.gsv_m.assert_not_called()
-        self.set_mode_m.assert_called_once_with(mode="<om>")
+        self.set_mode_m.assert_called_once_with(new_mode="<om>")
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
         self.get_mode_m.assert_not_called()
@@ -236,6 +241,21 @@ class TestMain:
         assert result.out == ""
         assert result.err == ""
 
+    def test_reset_players(self, capsys):
+        self.set_args({"command": "reset-players"})
+
+        main()
+
+        self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
+        self.set_mode_m.assert_not_called()
+        self.gpd_m.assert_not_called()
+        self.player_gen_m.assert_called_once_with()
+        self.get_mode_m.assert_not_called()
+        self.memory_m.assert_not_called()
+        self.update_wl_m.assert_not_called()
+        self.rps_m.assert_called_once_with(self.player_gen_m.return_value)
+
         result = capsys.readouterr()
         assert result.out == ""
         assert result.err == ""
@@ -247,12 +267,14 @@ class TestMain:
             main()
 
         self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
         self.get_mode_m.assert_not_called()
         self.memory_m.assert_not_called()
         self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
 
         result = capsys.readouterr()
         assert result.out == ""
