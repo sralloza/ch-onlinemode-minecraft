@@ -88,6 +88,7 @@ def test_change_players_mode(guuid_m, gusername_m, new_mode):
     change_players_mode(players, new_mode=new_mode)
 
     assert gusername_m.call_count == 5
+    
     gusername_m.assert_called_with(player.uuid)
     assert guuid_m.call_count == 5
     guuid_m.assert_called_with(gusername_m.return_value, new_mode)
