@@ -50,7 +50,7 @@
     {
       "label": "pylint code",
       "type": "shell",
-      "command": "${config:python.pythonPath} -m pylint server_manager --ignore=_version.py -d C0330,W0622,R0913,R0903,W0511",
+      "command": "${config:python.pythonPath} -m pylint server_manager --ignore=_version.py --load-plugins=pylint.extensions.docparams -d C0330,W0622,R0913,R0903,W0511",
       "problemMatcher": []
     },
     {
