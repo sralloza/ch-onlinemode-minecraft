@@ -1,6 +1,7 @@
 import pytest
 
 from server_manager.src.exceptions import (
+    CheckError,
     InvalidFileError,
     InvalidPlayerDataStateError,
     InvalidPlayerError,
@@ -17,6 +18,15 @@ class TestServerManagerError:
     def test_raises(self):
         with pytest.raises(ServerManagerError):
             raise ServerManagerError
+
+
+class TestCheckError:
+    def test_inheritance(self):
+        assert issubclass(CheckError, ServerManagerError)
+
+    def test_raises(self):
+        with pytest.raises(CheckError):
+            raise CheckError
 
 
 class TestInvalidServerStateError:

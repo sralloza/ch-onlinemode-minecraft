@@ -5,12 +5,12 @@ especially `online-mode`.
 import os
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
-from typing import Union
 
 from colorama import Fore
 
-from server_manager.src.exceptions import InvalidServerStateError
+from .exceptions import InvalidServerStateError
 
 from .utils import bool2str, str2bool
 
@@ -27,17 +27,17 @@ def get_server_path() -> Path:
         Path: root dir of the server (folder which contains `server.properties`).
     """
 
-    if DATA_PATH.exists():
+    if DATA_PATH.is_file():
         return Path(DATA_PATH.read_text().strip())
 
-    server_path = input("Write the path of the server: ")
+    server_path = input("Write the path of the server: ").strip()
     validate_server_path(server_path)
 
     DATA_PATH.write_text(Path(server_path).as_posix())
     return Path(server_path)
 
 
-def validate_server_path(server_path: Union[str, Path]):
+def validate_server_path(server_path: str):
     """Validates the `server_path`, ensuring that the server.properties file
     does exist inside the `server_path`.
 
@@ -45,16 +45,15 @@ def validate_server_path(server_path: Union[str, Path]):
         server_path (Union[str, Path]): server path.
     """
 
-    server_path = Path(server_path)
     properties_path = get_server_properties_filepath(server_path)
-    if not properties_path.exists():
-        message = f"server.properties not found: {properties_path.as_posix()}"
+    if not properties_path.is_file():
+        message = f"server.properties not found: {properties_path.as_posix()!r}"
         message = f"{Fore.LIGHTRED_EX}{message}{Fore.RESET}"
         print(message, file=sys.stderr)
         sys.exit(-1)
 
 
-def get_server_properties_filepath(server_path=None) -> Path:
+def get_server_properties_filepath(server_path: str = None) -> Path:
     """Returns the path of the server properties file (`server.properties`).
 
     Args:
@@ -65,9 +64,8 @@ def get_server_properties_filepath(server_path=None) -> Path:
         Path: server properties file path.
     """
 
-    if not server_path:
-        server_path = get_server_path()
-    return Path(server_path).joinpath("server.properties")
+    real_server_path = server_path or get_server_path()
+    return Path(real_server_path).joinpath("server.properties")
 
 
 def properties_manager(online_mode=None):
@@ -119,6 +117,7 @@ def set_server_mode(online_mode: bool):
     return properties_manager(online_mode=online_mode)
 
 
+@lru_cache(maxsize=10)
 def get_server_mode() -> bool:
     """Returns the current server mode.
 

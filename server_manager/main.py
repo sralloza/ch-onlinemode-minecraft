@@ -1,13 +1,13 @@
 """Module interface with the command line."""
 
 from argparse import ArgumentParser
-from typing import Dict, NoReturn
+from typing import Any, Dict, NoReturn
 
-from .src.exceptions import InvalidServerStateError
-
-from .src.players_data import get_players_data, get_mode
+from .src.checks import remove_players_safely
 from .src.files import File
 from .src.player import Player
+from .src.players_data import get_mode, get_players_data
+from .src.properties_manager import get_server_mode
 from .src.set_mode import set_mode
 from .src.utils import str2bool
 from .src.whitelist import update_whitelist
@@ -20,59 +20,108 @@ class Parser:
 
     @classmethod
     def error(cls, msg) -> NoReturn:
-        """Prints the error to the stderr as well as the program usage."""
+        """Prints the error to the stderr as well as the program usage.
+
+        Arguments:
+            msg (str): message to show.
+
+        Returns:
+            NoReturn: this function does not return.
+
+        """
         return cls.parser.error(msg)
 
     @classmethod
-    def parse_args(cls) -> Dict[str, str]:
+    def parse_args(cls) -> Dict[str, Any]:
         """Parses the command line arguments using `argparse`.
 
         Returns:
-            Dict[str, str]: arguments parsed.
+            Dict[str, Any]: arguments parsed.
         """
 
-        parser = ArgumentParser("online-mode-manager")
+        parser = ArgumentParser("server-manager")
         subparsers = parser.add_subparsers(dest="command")
 
-        online_mode_parser = subparsers.add_parser("online-mode")
-        online_mode_parser.add_argument("online-mode", type=str2bool, nargs="?")
+        online_mode_parser = subparsers.add_parser("set-online-mode")
+        online_mode_parser.add_argument("online-mode", type=str2bool)
 
+        subparsers.add_parser("get-online-mode")
         subparsers.add_parser("list")
         subparsers.add_parser("debug-files")
         subparsers.add_parser("data")
         subparsers.add_parser("whitelist")
+        subparsers.add_parser("reset-players")
 
-        cls._parser = parser
+        cls.parser = parser
         return vars(parser.parse_args())
 
 
-def main():  # pylint: disable=inconsistent-return-statements
+def main():  # pylint: disable=too-many-return-statements, inconsistent-return-statements
     """Main function."""
 
     args = Parser.parse_args()
     command = args["command"]
 
-    if command == "online-mode":
-        online_mode = args["online-mode"]
+    if command == "get-online-mode":
+        return Commands.get_online_mode()
 
-        try:
-            set_mode(mode=online_mode)
-        except InvalidServerStateError as exc:
-            Parser.error(" ".join(exc.args))
-
-        print(f"Set online-mode to {online_mode}")
-        return
+    if command == "set-online-mode":
+        return Commands.set_online_mode(args["online-mode"])
 
     if command == "data":
-        for player in get_players_data():
-            print("-", player)
-        return
+        return Commands.print_players_data()
 
     if command == "list":
+        return Commands.list_players()
+
+    if command == "debug-files":
+        return Commands.print_files()
+
+    if command == "whitelist":
+        return Commands.update_whitelist()
+
+    if command == "reset-players":
+        return Commands.reset_players()
+
+    return Parser.error("Must select command")
+
+
+class Commands:
+    """All possible commands executed via command line."""
+
+    @classmethod
+    def get_online_mode(cls):
+        """Prints the current server online-mode."""
+
+        current_servermode = get_server_mode()
+        print(f"server is currently running as {current_servermode}")
+
+    @classmethod
+    def set_online_mode(cls, online_mode: bool):
+        """Sets the server online-mode.
+
+        Args:
+            online_mode (bool): new server online-mode
+        """
+
+        set_mode(new_mode=online_mode)
+        print(f"Set online-mode to {online_mode}")
+
+    @classmethod
+    def print_players_data(cls):
+        """Prints the players data from parsing the csv."""
+
+        for player in get_players_data():
+            print(" -", player)
+
+    @classmethod
+    def list_players(cls):
+        """Prints all the server's players information."""
+
         players = Player.generate()
         data = []
         for player in players:
-            mode = "online" if get_mode(player.uuid) else "offine"
+            mode = "online" if get_mode(player.uuid) else "offline"
             data.append((player.username, mode, player.uuid))
 
         lengths = [max([len(k[x]) for k in data]) for x in range(len(data[0]))]
@@ -81,14 +130,27 @@ def main():  # pylint: disable=inconsistent-return-statements
             format_data = tuple([x for y in zip(lengths, row) for x in y])
             print(" - %-*s - %-*s - %*s" % format_data)
 
-        return
+    @classmethod
+    def print_files(cls):
+        """Prints all the files containing players data."""
 
-    if command == "debug-files":
         Player.generate()
         for key in File.memory:
             for file in File.memory[key]:
                 print(file)
-        return
 
-    if command == "whitelist":
+    @classmethod
+    def update_whitelist(cls):
+        """Writes an updated whitelist to the whitelist file (`whitelist.json`)."""
+
         return update_whitelist()
+
+    @classmethod
+    def reset_players(cls):
+        """Removes all the players data if each player has the ender chest
+        and the inventory emtpy.
+
+        """
+
+        players = Player.generate()
+        return remove_players_safely(players)

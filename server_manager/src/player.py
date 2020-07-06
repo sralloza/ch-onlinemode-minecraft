@@ -133,6 +133,9 @@ class Player:
         """Scans the root path and returns the list of players found in the
         minecraft server files.
 
+        Arguments:
+            root_path (Path): root path to search files.
+
         Returns:
             List[Player]: list of players found.
         """

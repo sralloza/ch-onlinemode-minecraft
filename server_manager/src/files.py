@@ -6,13 +6,13 @@ from pathlib import Path
 import re
 from typing import Optional, Type, Union
 
-from server_manager.src.exceptions import InvalidFileError
+from .exceptions import InvalidFileError
 
 logger = logging.getLogger(__name__)
 DataFile = Type["File"]
 
 
-class MetaFile(type):
+class MetaFile(type):  # pylint: disable=missing-param-doc, missing-type-doc
     """Metaclass to store different file types and its istances."""
 
     def __init__(cls, name, bases, attrs, **kwargs):
@@ -39,7 +39,11 @@ class MetaFile(type):
 
 
 class File(metaclass=MetaFile):
-    """Representation of a file containing player data."""
+    """Representation of a file containing player data.
+
+    Arguments:
+        path (str): actual path of the File.
+    """
 
     uuid_pattern = re.compile(
         r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
@@ -49,16 +53,7 @@ class File(metaclass=MetaFile):
     subtypes = {}
     memory = {}
 
-    def __new__(cls, path):
-        """Representation of a minecraft player file. Must contain a uuid.
-
-        Args:
-            path (str): path of the file.
-
-        Returns:
-            Optional[File]: File instance, maybe.
-        """
-
+    def __new__(cls, path: str):
         if cls == File:
             return File.identify(path)
 
@@ -67,10 +62,10 @@ class File(metaclass=MetaFile):
 
         return self
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.path = Path(path)
 
-    def __eq__(self, other):
+    def __eq__(self, other: DataFile):
         return self.path == other.path
 
     @property
