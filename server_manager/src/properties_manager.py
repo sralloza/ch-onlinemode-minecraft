@@ -5,6 +5,7 @@ especially `online-mode`.
 import os
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 from colorama import Fore
@@ -116,6 +117,7 @@ def set_server_mode(online_mode: bool):
     return properties_manager(online_mode=online_mode)
 
 
+@lru_cache(maxsize=10)
 def get_server_mode() -> bool:
     """Returns the current server mode.
 

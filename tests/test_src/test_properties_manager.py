@@ -139,12 +139,17 @@ class TestPropertiesManager:
 @mock.patch("server_manager.src.properties_manager.properties_manager")
 def test_set_server_mode(pm_m, online):
     result = set_server_mode(online_mode=online)
-    pm_m.assert_called_with(online_mode=online)
+    pm_m.assert_called_once_with(online_mode=online)
     assert result == pm_m.return_value
 
 
 @mock.patch("server_manager.src.properties_manager.properties_manager")
 def test_get_server_mode(pm_m):
     result = get_server_mode()
-    pm_m.assert_called_with(online_mode=None)
+    pm_m.assert_called_once_with(online_mode=None)
+    assert result == pm_m.return_value
+
+    # Test the lru_cache
+    result = get_server_mode()
+    pm_m.assert_called_once_with(online_mode=None)  # only called once
     assert result == pm_m.return_value
