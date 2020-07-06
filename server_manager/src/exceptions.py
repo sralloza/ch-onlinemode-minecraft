@@ -5,6 +5,10 @@ class ServerManagerError(Exception):
     """Server manager error."""
 
 
+class CheckError(ServerManagerError):
+    """Check error."""
+
+
 class InvalidFileError(ServerManagerError):
     """Invalid file error."""
 
