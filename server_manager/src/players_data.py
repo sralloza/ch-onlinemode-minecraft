@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from server_manager.src.exceptions import SearchError
+from .exceptions import SearchError
 
 CSV_PATH = Path(__file__).with_name("players-data.csv").absolute()
 

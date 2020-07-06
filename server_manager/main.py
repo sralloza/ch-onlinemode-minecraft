@@ -1,12 +1,12 @@
 """Module interface with the command line."""
 
 from argparse import ArgumentParser
-from typing import Dict, NoReturn
+from typing import Any, Dict, NoReturn
 
-from server_manager.src.properties_manager import get_server_mode
 from .src.files import File
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
+from .src.properties_manager import get_server_mode
 from .src.set_mode import set_mode
 from .src.utils import str2bool
 from .src.whitelist import update_whitelist
@@ -23,11 +23,11 @@ class Parser:
         return cls.parser.error(msg)
 
     @classmethod
-    def parse_args(cls) -> Dict[str, str]:
+    def parse_args(cls) -> Dict[str, Any]:
         """Parses the command line arguments using `argparse`.
 
         Returns:
-            Dict[str, str]: arguments parsed.
+            Dict[str, Any]: arguments parsed.
         """
 
         parser = ArgumentParser("server-manager")

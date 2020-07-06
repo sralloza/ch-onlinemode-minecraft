@@ -1,9 +1,8 @@
 """Manages server whitelist."""
 import json
 
-from server_manager.src.properties_manager import get_server_properties_filepath
-
 from .players_data import get_players_data
+from .properties_manager import get_server_properties_filepath
 
 
 def create_whitelist() -> str:

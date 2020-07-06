@@ -10,7 +10,7 @@ from pathlib import Path
 
 from colorama import Fore
 
-from server_manager.src.exceptions import InvalidServerStateError
+from .exceptions import InvalidServerStateError
 
 from .utils import bool2str, str2bool
 

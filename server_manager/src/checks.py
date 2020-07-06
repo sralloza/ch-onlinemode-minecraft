@@ -1,12 +1,12 @@
 """Checks to make before changing anything."""
 
-import logging
 from itertools import groupby
+import logging
 from typing import List, Tuple
 
-from server_manager.src.exceptions import CheckError
-from server_manager.src.player import Player
-from server_manager.src.properties_manager import get_server_mode
+from .exceptions import CheckError
+from .player import Player
+from .properties_manager import get_server_mode
 
 
 def check_players(players: List[Player]) -> bool:

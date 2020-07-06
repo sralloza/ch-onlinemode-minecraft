@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 from typing import Optional, Type, Union
 
-from server_manager.src.exceptions import InvalidFileError
+from .exceptions import InvalidFileError
 
 logger = logging.getLogger(__name__)
 DataFile = Type["File"]
