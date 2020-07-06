@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from typing import Dict, NoReturn
 
+from server_manager.src.properties_manager import get_server_mode
 from .src.files import File
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
@@ -32,9 +33,10 @@ class Parser:
         parser = ArgumentParser("server-manager")
         subparsers = parser.add_subparsers(dest="command")
 
-        online_mode_parser = subparsers.add_parser("online-mode")
-        online_mode_parser.add_argument("online-mode", type=str2bool, nargs="?")
+        online_mode_parser = subparsers.add_parser("set-online-mode")
+        online_mode_parser.add_argument("online-mode", type=str2bool)
 
+        subparsers.add_parser("get-online-mode")
         subparsers.add_parser("list")
         subparsers.add_parser("debug-files")
         subparsers.add_parser("data")
@@ -44,13 +46,18 @@ class Parser:
         return vars(parser.parse_args())
 
 
-def main():  # pylint: disable=inconsistent-return-statements
+def main():  # pylint: disable=too-many-return-statements, inconsistent-return-statements
     """Main function."""
 
     args = Parser.parse_args()
     command = args["command"]
 
-    if command == "online-mode":
+    if command == "get-online-mode":
+        current_servermode = get_server_mode()
+        print(f"server is currently running as {current_servermode}")
+        return
+
+    if command == "set-online-mode":
         online_mode = args["online-mode"]
         set_mode(mode=online_mode)
 

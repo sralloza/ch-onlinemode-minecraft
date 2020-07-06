@@ -20,19 +20,25 @@ class TestParseArgs:
             sys_argv_m.__getitem__.assert_called_once_with(slice(1, None, None))
             assert Parser.parser.prog == "server-manager"
 
-    def test_online_mode_ok_arg(self):
-        result = self.set_args("online-mode true")
-        assert result["command"] == "online-mode"
+    def test_set_online_mode_ok(self):
+        result = self.set_args("set-online-mode true")
+        assert result["command"] == "set-online-mode"
         assert result["online-mode"] is True
+        assert len(result) == 2
 
-        result = self.set_args("online-mode false")
-        assert result["command"] == "online-mode"
+        result = self.set_args("set-online-mode false")
+        assert result["command"] == "set-online-mode"
         assert result["online-mode"] is False
+        assert len(result) == 2
 
-    def test_online_mode_ok_no_arg(self):
-        result = self.set_args("online-mode")
-        assert result["command"] == "online-mode"
-        assert result["online-mode"] is None
+    def test_set_online_mode_fail_no_arg(self):
+        with pytest.raises(SystemExit, match="2"):
+            self.set_args("online-mode")
+
+    def test_get_online_mode(self):
+        result = self.set_args("get-online-mode")
+        assert result["command"] == "get-online-mode"
+        assert len(result) == 1
 
     def test_online_mode_fail_typerror(self):
         with pytest.raises(SystemExit, match="2"):
@@ -41,22 +47,27 @@ class TestParseArgs:
     def test_list(self):
         result = self.set_args("list")
         assert result["command"] == "list"
+        assert len(result) == 1
 
     def test_debug_files(self):
         result = self.set_args("debug-files")
         assert result["command"] == "debug-files"
+        assert len(result) == 1
 
     def test_data(self):
         result = self.set_args("data")
         assert result["command"] == "data"
+        assert len(result) == 1
 
     def test_whitelist(self):
         result = self.set_args("whitelist")
         assert result["command"] == "whitelist"
+        assert len(result) == 1
 
     def test_no_command(self):
         result = self.set_args("")
         assert result["command"] is None
+        assert len(result) == 1
 
 
 @mock.patch("argparse.ArgumentParser.parse_args")
@@ -77,6 +88,7 @@ class TestMain:
     @pytest.fixture(autouse=True)
     def mocks(self):
         self.parse_args_m = mock.patch("server_manager.main.Parser.parse_args").start()
+        self.gsv_m = mock.patch("server_manager.main.get_server_mode").start()
         self.set_mode_m = mock.patch("server_manager.main.set_mode").start()
         self.gpd_m = mock.patch("server_manager.main.get_players_data").start()
         self.player_gen_m = mock.patch("server_manager.main.Player.generate").start()
@@ -84,6 +96,7 @@ class TestMain:
         self._memory_m = mock.patch("server_manager.main.File.memory").start()
         self.memory_m = self._memory_m.__getitem__
         self.update_wl_m = mock.patch("server_manager.main.update_whitelist").start()
+        self.rps_m = mock.patch("server_manager.main.remove_players_safely").start()
 
         yield
 
@@ -92,18 +105,40 @@ class TestMain:
     def set_args(self, args):
         self.parse_args_m.return_value = args
 
-    def test_online_mode(self, capsys):
-        self.set_args({"command": "online-mode", "online-mode": "<om>"})
+    def test_get_online_mode(self, capsys):
+        self.set_args({"command": "get-online-mode"})
+        self.gsv_m.return_value = "<server-mode>"
 
         main()
 
         self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_called_once_with()
+        self.set_mode_m.assert_not_called()
+        self.gpd_m.assert_not_called()
+        self.player_gen_m.assert_not_called()
+        self.get_mode_m.assert_not_called()
+        self.memory_m.assert_not_called()
+        self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
+
+        result = capsys.readouterr()
+        assert result.out == "server is currently running as <server-mode>\n"
+        assert result.err == ""
+
+    def test_set_online_mode(self, capsys):
+        self.set_args({"command": "set-online-mode", "online-mode": "<om>"})
+
+        main()
+
+        self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
         self.set_mode_m.assert_called_once_with(mode="<om>")
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
         self.get_mode_m.assert_not_called()
         self.memory_m.assert_not_called()
         self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
 
         result = capsys.readouterr()
         assert result.out == "Set online-mode to <om>\n"
@@ -116,12 +151,14 @@ class TestMain:
         main()
 
         self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_called_once_with()
         self.player_gen_m.assert_not_called()
         self.get_mode_m.assert_not_called()
         self.memory_m.assert_not_called()
         self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
 
         result = capsys.readouterr()
         assert result.out == " - p1\n - p2\n - p3\n"
@@ -140,12 +177,14 @@ class TestMain:
         main()
 
         self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_called_once_with()
         self.get_mode_m.assert_called()
         self.memory_m.assert_not_called()
         self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
 
         result = capsys.readouterr()
         expected = (
@@ -165,12 +204,14 @@ class TestMain:
         main()
 
         self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_called_once_with()
         self.get_mode_m.assert_not_called()
         self.memory_m.assert_called()
         self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
 
         result = capsys.readouterr()
         assert result.out == "a1\nb1\nb2\nc1\nc2\nc3\n"
@@ -182,12 +223,18 @@ class TestMain:
         main()
 
         self.parse_args_m.assert_called_once_with()
+        self.gsv_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
         self.get_mode_m.assert_not_called()
         self.memory_m.assert_not_called()
         self.update_wl_m.assert_called_once_with()
+        self.rps_m.assert_not_called()
+
+        result = capsys.readouterr()
+        assert result.out == ""
+        assert result.err == ""
 
         result = capsys.readouterr()
         assert result.out == ""
