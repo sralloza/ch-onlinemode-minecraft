@@ -1,0 +1,6 @@
+[MASTER]
+ignore=_version.py
+load-plugins=pylint.extensions.docparams,pylint.extensions.mccabe
+disable=C0330,R0913,R0903,W0511
+accept-no-param-doc=no
+accept-no-raise-doc=no

@@ -50,13 +50,13 @@
     {
       "label": "pylint code",
       "type": "shell",
-      "command": "${config:python.pythonPath} -m pylint server_manager --ignore=_version.py --load-plugins=pylint.extensions.docparams -d C0330,W0622,R0913,R0903,W0511",
+      "command": "${config:python.pythonPath} -m pylint server_manager",
       "problemMatcher": []
     },
     {
       "label": "pylint tests",
       "type": "shell",
-      "command": "${config:python.pythonPath} -m pylint tests -d C0330,C0114,C0115,C0116,R0201,R0915,W0201,R0914,R0912,C0415,R0903,R0801,R0902",
+      "command": "${config:python.pythonPath} -m pylint tests -d C0114,C0115,C0116,R0201,R0915,W0201,R0914,R0912,C0415,R0903,R0801,R0902",
       "problemMatcher": []
     }
   ],
