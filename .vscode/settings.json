@@ -7,4 +7,12 @@
   "python.testing.nosetestsEnabled": false,
   "python.testing.pytestEnabled": true,
   "pyright.disableLanguageServices": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "*egg-info": true
+  }
 }
