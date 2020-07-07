@@ -6,6 +6,7 @@ from typing import List, Tuple
 
 from .exceptions import CheckError
 from .player import Player
+from .plugin import get_plugin_mode
 from .properties_manager import get_server_mode
 
 
@@ -100,6 +101,28 @@ class PlayerChecks:
             )
             return remove_players_safely(players)
         return True
+
+
+def check_plugin() -> bool:
+    """Checks that the current server mode is not the same as the current
+    plugin mode, because when the server is running with online-mode=True,
+    the plugin is disabled and viceversa.
+
+    Raises:
+        CheckError: if the check fails.
+
+    Returns:
+        bool: True for sucess.
+    """
+
+    logger = logging.getLogger(__name__)
+    current_server_mode = get_server_mode()
+    plugin_mode = get_plugin_mode()
+    if plugin_mode == current_server_mode:
+        msg = "Plugin check failed [server-mode=%s, plugin-mode=%s]"
+        logger.critical(msg, current_server_mode, plugin_mode)
+        raise CheckError(msg % (current_server_mode, plugin_mode))
+    return True
 
 
 def group_players(iterable: List[Player], key=None) -> List[Tuple[str, List[Player]]]:
