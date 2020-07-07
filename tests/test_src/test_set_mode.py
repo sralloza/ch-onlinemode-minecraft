@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from server_manager.src.exceptions import CheckError
-from server_manager.src.set_mode import change_players_mode, set_mode
+from server_manager.src.set_mode import set_mode
 
 
 class TestSetMode:
@@ -13,7 +13,7 @@ class TestSetMode:
         self.gsp_m = mock.patch(root + "get_server_path").start()
         self.gsm_m = mock.patch(root + "get_server_mode").start()
         self.player_gen_m = mock.patch(root + "Player.generate").start()
-        self.check_pl_m = mock.patch(root + "check_players").start()
+        self.check_players_m = mock.patch(root + "check_players").start()
         self.cpm_m = mock.patch(root + "change_players_mode").start()
         self.ssm_m = mock.patch(root + "set_server_mode").start()
 
@@ -29,7 +29,7 @@ class TestSetMode:
         self.gsp_m.assert_called_once_with()
         self.gsm_m.assert_called_once_with()
         self.player_gen_m.assert_not_called()
-        self.check_pl_m.assert_not_called()
+        self.check_players_m.assert_not_called()
         self.cpm_m.assert_not_called()
         self.ssm_m.assert_not_called()
 
@@ -40,18 +40,18 @@ class TestSetMode:
         assert caplog.records[1].msg == "server is already running with online-mode=%s"
 
     @pytest.mark.parametrize("new_mode", [False, True])
-    def test_set_mode_fails_check(self, new_mode, caplog):
+    def test_set_mode_fails_players_check(self, new_mode, caplog):
         caplog.set_level(10)
         self.gsm_m.return_value = not new_mode
-        self.check_pl_m.side_effect = CheckError("check failed")
+        self.check_players_m.side_effect = CheckError("players check failed")
 
-        with pytest.raises(CheckError, match="check failed"):
+        with pytest.raises(CheckError, match="players check failed"):
             set_mode(new_mode)
 
         self.gsp_m.assert_called_once_with()
         self.gsm_m.assert_called_once_with()
         self.player_gen_m.assert_called_once_with(self.gsp_m.return_value)
-        self.check_pl_m.assert_called_once_with(self.player_gen_m.return_value)
+        self.check_players_m.assert_called_once_with(self.player_gen_m.return_value)
         self.cpm_m.assert_not_called()
         self.ssm_m.assert_not_called()
 
@@ -78,17 +78,5 @@ class TestSetMode:
         assert caplog.records[0].msg == "Setting online-mode=%s (current=%s, path=%s)"
 
 
-@pytest.mark.parametrize("new_mode", [True, False])
-@mock.patch("server_manager.src.set_mode.get_username")
-@mock.patch("server_manager.src.set_mode.get_uuid")
-def test_change_players_mode(guuid_m, gusername_m, new_mode):
-    player = mock.MagicMock()
-    players = [player] * 5
 
-    change_players_mode(players, new_mode=new_mode)
 
-    assert gusername_m.call_count == 5
-
-    gusername_m.assert_called_with(player.uuid)
-    assert guuid_m.call_count == 5
-    guuid_m.assert_called_with(gusername_m.return_value, new_mode)
