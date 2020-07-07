@@ -6,6 +6,7 @@ import pytest
 from server_manager.src.checks import (
     PlayerChecks,
     check_players,
+    check_plugin,
     group_players,
     remove_players_safely,
 )
@@ -125,6 +126,49 @@ class TestPlayerChecks:
         else:
             assert result is True
             assert len(caplog.records) == 0
+
+
+class TestCheckPlugin:
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.gsm_m = mock.patch("server_manager.src.checks.get_server_mode").start()
+        self.gpm_m = mock.patch("server_manager.src.checks.get_plugin_mode").start()
+        yield
+        mock.patch.stopall()
+
+    @pytest.mark.parametrize("server_mode", [True, False])
+    def test_ok(self, server_mode, caplog):
+        caplog.set_level(10)
+        self.gsm_m.return_value = server_mode
+        self.gpm_m.return_value = not server_mode
+
+        result = check_plugin()
+        assert result is True
+
+        self.gsm_m.assert_called_once_with()
+        self.gpm_m.assert_called_once_with()
+
+        assert len(caplog.records) == 0
+
+    @pytest.mark.parametrize("server_mode", [True, False])
+    def test_fail(self, server_mode, caplog):
+        caplog.set_level(10)
+        self.gsm_m.return_value = server_mode
+        self.gpm_m.return_value = server_mode
+
+        msg = "Plugin check failed [server-mode=%s, plugin-mode=%s]"
+        msg = msg % (server_mode, server_mode)
+        with pytest.raises(CheckError) as exc:
+            check_plugin()
+        assert exc.value.args[0] == msg
+
+        self.gsm_m.assert_called_once_with()
+        self.gpm_m.assert_called_once_with()
+
+        assert len(caplog.records) == 1
+        record = caplog.records[0]
+        assert record.message == msg
+        assert record.levelname == "CRITICAL"
 
 
 class TestGroupPlayers:

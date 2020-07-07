@@ -7,7 +7,7 @@ import pytest
 
 from server_manager.src.exceptions import InvalidPlayerError
 from server_manager.src.files import AdvancementsFile, File, PlayerDataFile, StatsFile
-from server_manager.src.player import Player
+from server_manager.src.player import Player, change_players_mode
 
 # pylint: disable=redefined-outer-name
 
@@ -362,3 +362,19 @@ class TestGenerate:
         assert players == expected
         self.pl_m.assert_called()
         assert self.pl_m.call_count == 3
+
+
+@pytest.mark.parametrize("new_mode", [True, False])
+@mock.patch("server_manager.src.player.get_username")
+@mock.patch("server_manager.src.player.get_uuid")
+def test_change_players_mode(guuid_m, gusername_m, new_mode):
+    player = mock.MagicMock()
+    players = [player] * 5
+
+    change_players_mode(players, new_mode=new_mode)
+
+    assert gusername_m.call_count == 5
+
+    gusername_m.assert_called_with(player.uuid)
+    assert guuid_m.call_count == 5
+    guuid_m.assert_called_with(gusername_m.return_value, new_mode)

@@ -1,11 +1,10 @@
 """Checkers needed before setting a new mode."""
 
 import logging
-from typing import List
 
-from .checks import check_players
-from .player import Player
-from .players_data import get_username, get_uuid
+from .checks import check_players, check_plugin
+from .player import Player, change_players_mode
+from .plugin import set_plugin_mode
 from .properties_manager import get_server_mode, get_server_path, set_server_mode
 
 
@@ -37,20 +36,12 @@ def set_mode(new_mode):
         raise ValueError(msg % current_servermode)
 
     players = Player.generate(server_path)
+
+    # Checks
     check_players(players)
+    check_plugin()
+
+    # Setters
     change_players_mode(players, new_mode)
-
+    set_plugin_mode(not new_mode)  # plugin mode is the opposite as server mode
     set_server_mode(new_mode)
-
-
-def change_players_mode(players: List[Player], new_mode: bool):
-    """Changes the online-mode for all `players`.
-
-    Args:
-        players (List[Player]): list of players to change online-mode.
-        new_mode (bool): new online-mode to set.
-    """
-
-    for player in players:
-        new_uuid = get_uuid(get_username(player.uuid), new_mode)
-        player.change_uuid(new_uuid)

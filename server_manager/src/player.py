@@ -1,9 +1,9 @@
 """Contains player related code."""
 
-import gzip
-import logging
 from collections import defaultdict
+import gzip
 from io import BytesIO
+import logging
 from pathlib import Path
 from typing import List
 
@@ -11,7 +11,7 @@ import nbtlib
 
 from .exceptions import InvalidPlayerError
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
-from .players_data import get_mode, get_username
+from .players_data import get_mode, get_username, get_uuid
 from .properties_manager import get_server_path
 
 
@@ -159,3 +159,16 @@ class Player:
         cls.logger.debug("Files grouped by username")
 
         return players
+
+
+def change_players_mode(players: List[Player], new_mode: bool):
+    """Changes the online-mode for all `players`.
+
+    Args:
+        players (List[Player]): list of players to change online-mode.
+        new_mode (bool): new online-mode to set.
+    """
+
+    for player in players:
+        new_uuid = get_uuid(get_username(player.uuid), new_mode)
+        player.change_uuid(new_uuid)

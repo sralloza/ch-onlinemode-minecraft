@@ -21,6 +21,10 @@ class InvalidPlayerError(ServerManagerError):
     """Invalid player error."""
 
 
+class InvalidPluginStateError(ServerManagerError):
+    """Invalid plugin state error."""
+
+
 class InvalidServerStateError(ServerManagerError):
     """Invalid server state error."""
 
