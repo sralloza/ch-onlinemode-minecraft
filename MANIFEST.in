@@ -3,3 +3,5 @@ include server_manager/_version.py
 include server_manager/src/players-data.csv
 include tests/test_data/nbt-example.dat
 include tests/test_data/server.properties
+include README.md
+include requirements.txt
