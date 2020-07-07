@@ -21,6 +21,17 @@ def get_server_path() -> Path:
     if DATA_PATH.is_file():
         return Path(DATA_PATH.read_text().strip())
 
+    return gen_and_save_server_path()
+
+
+def gen_and_save_server_path():
+    """Asks the user to input the server path and stores it.
+
+    Returns:
+        Path: server path given by the user.
+    """
+
+    # pylint: disable=import-outside-toplevel,cyclic-import
     from .properties_manager import validate_server_path
 
     server_path = input("Write the path of the server: ").strip()
