@@ -2,9 +2,9 @@
 
 import logging
 
-from .checks import check_players
-from .player import Player
-from .player import change_players_mode
+from .checks import check_players, check_plugin
+from .player import Player, change_players_mode
+from .plugin import set_plugin_mode
 from .properties_manager import get_server_mode, get_server_path, set_server_mode
 
 
@@ -39,9 +39,9 @@ def set_mode(new_mode):
 
     # Checks
     check_players(players)
+    check_plugin()
 
     # Setters
     change_players_mode(players, new_mode)
+    set_plugin_mode(not new_mode)  # plugin mode is the opposite as server mode
     set_server_mode(new_mode)
-
-
