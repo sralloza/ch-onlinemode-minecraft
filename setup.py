@@ -12,4 +12,5 @@ setup(
     packages=find_packages(),
     install_requires=requirements,
     cmdclass=versioneer.get_cmdclass(),
+    include_package_data=True,
 )
