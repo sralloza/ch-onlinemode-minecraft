@@ -7,7 +7,7 @@ import versioneer
 requirements = Path(__file__).with_name("requirements.txt").read_text().splitlines()
 
 setup(
-    name="server-manager",
+    name="lia",
     version=versioneer.get_version(),
     entry_points={"console_scripts": ["lia=server_manager.main:main"]},
     packages=find_packages(),
