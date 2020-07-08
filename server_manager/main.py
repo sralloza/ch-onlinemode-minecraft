@@ -155,15 +155,20 @@ class Commands:
 
         players = Player.generate()
         data = []
+        data.append(("username", "mode", "uuid", "inventory", "ender-chest"))
+
         for player in players:
             mode = "online" if get_mode(player.uuid) else "offline"
-            data.append((player.username, mode, player.uuid))
+            inventory = str(len(player.get_inventory()))
+            ender_chest = str(len(player.get_ender_chest()))
+            data.append((player.username, mode, player.uuid, inventory, ender_chest))
 
         lengths = [max([len(k[x]) for k in data]) for x in range(len(data[0]))]
 
         for row in data:
-            format_data = tuple([x for y in zip(lengths, row) for x in y])
-            print(" - %-*s - %-*s - %*s" % format_data)
+            format_data = tuple([x for y in zip(row, lengths) for x in y])
+            output_str = " | {:{}} - {:^{}} - {:^{}} - {:^{}} - {:^{}} |"
+            print(output_str.format(*format_data))
 
     @classmethod
     def print_files(cls):

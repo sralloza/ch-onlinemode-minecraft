@@ -1,5 +1,5 @@
 import shlex
-from collections import namedtuple
+from dataclasses import dataclass
 from unittest import mock
 
 import pytest
@@ -306,7 +306,17 @@ class TestCommand:
         assert result.err == ""
 
     def test_list_players(self, capsys):
-        Player = namedtuple("Player", "username uuid")
+        @dataclass
+        class Player:
+            username: str
+            uuid: str
+
+            def get_inventory(self):
+                return self.username
+
+            def get_ender_chest(self):
+                return self.uuid
+
         self.player_gen_m.return_value = [
             Player("player one", "uuid-1"),
             Player("p2", "id-2"),
@@ -328,9 +338,10 @@ class TestCommand:
 
         result = capsys.readouterr()
         expected = (
-            " - player one       - online  -      uuid-1\n"
-            " - p2               - offline -        id-2\n"
-            " - this is player 3 - online  - 333-333-333\n"
+            " | username         -  mode   -    uuid     - inventory - ender-chest |\n"
+            " | player one       - online  -   uuid-1    -    10     -      6      |\n"
+            " | p2               - offline -    id-2     -     2     -      4      |\n"
+            " | this is player 3 - online  - 333-333-333 -    16     -     11      |\n"
         )
         assert result.out == expected
         assert result.err == ""
