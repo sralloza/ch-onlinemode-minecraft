@@ -2,7 +2,7 @@ from collections import namedtuple
 from unittest import mock
 
 import pytest
-
+from colorama.ansi import Fore
 from server_manager.src.checks import (
     PlayerChecks,
     check_players,
@@ -230,7 +230,7 @@ class TestRemovePlayersSafely:
             assert rec2.levelname == "INFO"
             assert rec2.message == "Removed player p [True]"
 
-    def test_fail_inventory(self, caplog):
+    def test_fail_inventory(self, caplog, capsys):
         caplog.set_level(10, "server_manager.src.checks")
         player = mock.MagicMock(username="p", online=True)
         player.get_ender_chest.return_value = []
@@ -239,6 +239,7 @@ class TestRemovePlayersSafely:
         players = [player] * 5
 
         remove_players_safely(players)
+        captured = capsys.readouterr()
 
         assert len(caplog.records) == 10
         records = iter(caplog.records)
@@ -248,11 +249,15 @@ class TestRemovePlayersSafely:
 
             rec2 = next(records)
             assert rec2.levelname == "ERROR"
-            assert (
-                rec2.msg
-                == "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
-            )
-            assert rec2.args == ("<ext-repr>", 0, 2)
+            msg = "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
+            args = ("<ext-repr>", 0, 2)
+            assert rec2.msg == msg
+            assert rec2.args == args
+
+            print_msg = Fore.LIGHTRED_EX + msg % args + Fore.RESET + "\n"
+            assert print_msg in captured.err
+
+        assert captured.out == ""
 
     def test_fail_ender_chest(self, caplog):
         caplog.set_level(10, "server_manager.src.checks")

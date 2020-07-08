@@ -41,7 +41,7 @@ def get_config():
     cfg.VCS = "git"
     cfg.style = "pep440"
     cfg.tag_prefix = "v"
-    cfg.parentdir_prefix = "server-manager-"
+    cfg.parentdir_prefix = "lia-"
     cfg.versionfile_source = "server_manager/_version.py"
     cfg.verbose = False
     return cfg

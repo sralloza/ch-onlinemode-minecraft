@@ -129,16 +129,19 @@ class TestRunSfk:
 
         self.run_m.assert_called_once_with(args, **kwargs)
 
-        if fail:
-            assert len(caplog.records) == 2
+        assert len(caplog.records) == 2
 
+        if fail:
             assert (
                 caplog.records[1].msg == "Error running SFK [%d] (stdout=%s, stderr=%s)"
             )
             assert caplog.records[1].args == (-1, "<stdout>", "<stderr>")
             assert caplog.records[1].levelname == "CRITICAL"
+
         else:
-            assert len(caplog.records) == 1
+            assert caplog.records[1].msg == "Backup created"
+            assert caplog.records[1].args == ()
+            assert caplog.records[1].levelname == "INFO"
 
         assert caplog.records[0].msg == "Creating backup of %r to %r"
         assert caplog.records[0].args == ("/path/to/server", "/path/to/zip")
