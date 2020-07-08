@@ -43,6 +43,11 @@ class Parser:
         return cls.parser.error(msg)
 
     @classmethod
+    def print_help(cls):
+        """Prints the Parser's help."""
+        cls.parser.print_help()
+
+    @classmethod
     def parse_args(cls) -> Dict[str, Any]:
         """Parses the command line arguments using `argparse`.
 
@@ -108,7 +113,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     if command == "update-whitelist":
         return Commands.update_whitelist()
 
-    return Parser.error("Must select command")
+    return Parser.print_help()
 
 
 class Commands:

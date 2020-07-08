@@ -98,6 +98,18 @@ class TestParseArgs:
         assert len(result) == 1
 
 
+@mock.patch("server_manager.main.Parser.parser")
+def test_print_help(parser_m, capsys):
+    parser_m.print_help.return_value = "<parser-help>"
+    Parser.print_help()
+
+    result = capsys.readouterr()
+    parser_m.print_help.assert_called_once_with()
+
+    assert result.err == ""
+    assert result.out == ""
+
+
 @mock.patch("argparse.ArgumentParser.parse_args")
 def test_parser_error(parse_args_m, capsys):
     Parser.parse_args()
@@ -118,6 +130,7 @@ class TestMain:
         self.parse_args_m = mock.patch("server_manager.main.Parser.parse_args").start()
         self.logging_m = mock.patch("server_manager.main.setup_logging").start()
         self.commands_m = mock.patch("server_manager.main.Commands").start()
+        self.parser_help_m = mock.patch("server_manager.main.Parser.print_help").start()
 
         self.commands = [
             "backup",
@@ -196,9 +209,10 @@ class TestMain:
 
     def test_no_command(self):
         self.set_args({"command": None})
-        with pytest.raises(SystemExit, match="2"):
-            main()
+
+        main()
         self.assert_only_call("none")
+        self.parser_help_m.assert_called_once_with()
 
 
 class TestCommand:
