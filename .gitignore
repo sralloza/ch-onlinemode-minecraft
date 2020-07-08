@@ -6,3 +6,5 @@ data/
 .coverage
 htmlcov/
 *egg-info
+
+launcher.py
