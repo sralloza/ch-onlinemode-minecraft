@@ -54,10 +54,10 @@ class Parser:
         subparsers = parser.add_subparsers(dest="command")
 
         subparsers.add_parser("backup", help="backup server")
-        subparsers.add_parser("get-online-mode", help="print current online-mode")
         subparsers.add_parser(
-            "list-all-files", help="list all files containing player data in server"
+            "debug-files", help="list all files containing player data in server"
         )
+        subparsers.add_parser("get-online-mode", help="print current online-mode")
         subparsers.add_parser("list-csv-players", help="show players registered in csv")
         subparsers.add_parser(
             "list-server-players", help="show players found in server"
@@ -87,7 +87,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     if command == "backup":
         return Commands.backup()
 
-    if command == "list-all-files":
+    if command == "list-csv-players":
         return Commands.print_players_data()
 
     if command == "debug-files":
@@ -96,7 +96,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     if command == "get-online-mode":
         return Commands.get_online_mode()
 
-    if command == "list-csv-players":
+    if command == "list-server-players":
         return Commands.list_players()
 
     if command == "reset-players":

@@ -43,14 +43,14 @@ class TestParseArgs:
         assert result["command"] == "backup"
         assert len(result) == 1
 
+    def test_debug_files(self):
+        result = self.set_args("debug-files")
+        assert result["command"] == "debug-files"
+        assert len(result) == 1
+
     def test_get_online_mode(self):
         result = self.set_args("get-online-mode")
         assert result["command"] == "get-online-mode"
-        assert len(result) == 1
-
-    def test_list_all_files(self):
-        result = self.set_args("list-all-files")
-        assert result["command"] == "list-all-files"
         assert len(result) == 1
 
     def test_list_csv_players(self):
@@ -153,7 +153,7 @@ class TestMain:
         self.assert_only_call("backup")
 
     def test_print_players_data(self):
-        self.set_args({"command": "list-all-files"})
+        self.set_args({"command": "list-csv-players"})
         main()
         self.commands_m.print_players_data.assert_called_once_with()
         self.assert_only_call("print_players_data")
@@ -171,7 +171,7 @@ class TestMain:
         self.assert_only_call("get_online_mode")
 
     def test_list_players(self):
-        self.set_args({"command": "list-csv-players"})
+        self.set_args({"command": "list-server-players"})
         main()
         self.commands_m.list_players.assert_called_once_with()
         self.assert_only_call("list_players")
