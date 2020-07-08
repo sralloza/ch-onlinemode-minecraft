@@ -7,16 +7,16 @@ from server_manager.main import Commands, Parser, main, setup_logging
 
 
 @mock.patch("logging.FileHandler")
-@mock.patch("server_manager.main.get_server_path")
+@mock.patch("server_manager.main.get_backups_folder")
 @mock.patch("logging.basicConfig")
 def test_setup_logging(log_config_m, gsp_m, file_h_m):
     fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
-    filename = gsp_m.return_value.with_name.return_value
+    filename = gsp_m.return_value.joinpath.return_value
 
     setup_logging()
 
     gsp_m.assert_called_once_with()
-    gsp_m.return_value.with_name.assert_called_once_with("lia-manager.log")
+    gsp_m.return_value.joinpath.assert_called_once_with("lia-manager.log")
 
     file_h_m.assert_called_once_with(filename, "at", "utf8")
 

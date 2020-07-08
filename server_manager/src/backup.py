@@ -1,11 +1,12 @@
 """Manages backups of the minecraft server."""
 
-from datetime import datetime
 import logging
+from datetime import datetime
+from functools import lru_cache
 from os import makedirs
 from pathlib import Path
 from platform import system
-from subprocess import CalledProcessError, DEVNULL, PIPE, run
+from subprocess import DEVNULL, PIPE, CalledProcessError, run
 
 from .exceptions import SFKError, SFKNotFoundError
 from .paths import get_server_path
@@ -30,6 +31,7 @@ def is_sfk_installed() -> bool:
         return False
 
 
+@lru_cache(maxsize=10)
 def get_backups_folder() -> Path:
     """Returns the folder where backups are stored.
 

@@ -56,6 +56,16 @@ def test_get_backups_folder(gsp_m, mkdirs_m):
     gsp_m.return_value.with_name.assert_called_once_with("backups")
     mkdirs_m.assert_called_once_with(result, exist_ok=True)
 
+    # Test LRU cache
+    result = get_backups_folder()
+    gsp_m.assert_called_once_with()
+
+    assert result == gsp_m.return_value.with_name.return_value
+    gsp_m.return_value.with_name.assert_called_once_with("backups")
+    mkdirs_m.assert_called_once_with(result, exist_ok=True)
+
+    get_backups_folder.cache_clear()
+
 
 @mock.patch("server_manager.src.backup.datetime")
 @mock.patch("server_manager.src.backup.get_backups_folder")
