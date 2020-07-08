@@ -2,7 +2,10 @@
 
 from itertools import groupby
 import logging
+import sys
 from typing import List, Tuple
+
+from colorama.ansi import Fore
 
 from .exceptions import CheckError
 from .player import Player
@@ -164,13 +167,10 @@ def remove_players_safely(players: List[Player]) -> bool:
         if ender_chest or inventory:
             ender_chest = len(ender_chest)
             inventory = len(inventory)
-            logger.error(
-                "Can't remove player %s\nItems: ender_chest=%d, inventory=%d",
-                player.to_extended_repr(),
-                ender_chest,
-                inventory,
-            )
-
+            msg = "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
+            args = (player.to_extended_repr(), ender_chest, inventory)
+            logger.error(msg, *args)
+            print(Fore.LIGHTRED_EX + msg % args + Fore.RESET, file=sys.stderr)
             error = True
             continue
 
