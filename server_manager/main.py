@@ -18,6 +18,8 @@ from .src.whitelist import update_whitelist
 
 
 def setup_logging():
+    """Configure logging."""
+
     fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
     filename = get_server_path().with_name("lia-manager.log")
     handlers = [logging.FileHandler(filename, "at", "utf8")]
@@ -108,6 +110,7 @@ class Commands:
 
     @classmethod
     def backup(cls):
+        """Makes a backup of the minecraft server folder."""
         create_backup()
 
     @classmethod
