@@ -328,8 +328,10 @@ class TestGenerate:
         mock.patch.stopall()
 
     @pytest.mark.parametrize("root_path", [None, Path("root")])
-    def test_ok(self, root_path):
+    def test_ok(self, root_path, caplog):
+        caplog.set_level(10)
         players = Player.generate(root_path)
+        assert len(caplog.records) == 2
         self.gf_m.assert_called_once_with(Path("root"))
 
         if root_path:

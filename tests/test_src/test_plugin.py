@@ -33,22 +33,22 @@ def test_get_plugins_folder(gsp_m):
     gsp_m.return_value.joinpath.assert_called_with("plugins")
 
 
-@mock.patch("server_manager.src.plugin.PLUGIN_NAME")
+@mock.patch("server_manager.src.plugin.PLUGIN_DISABLED_NAME")
 @mock.patch("server_manager.src.plugin.get_plugins_folder")
-def test_get_plugin_offline_path(gpf_m, plugin_name_m):
+def test_get_plugin_offline_path(gpf_m, plugin_disabled_name):
     result = get_plugin_offline_path()
 
     assert gpf_m.return_value.joinpath.return_value == result
-    gpf_m.return_value.joinpath.assert_called_with(plugin_name_m)
+    gpf_m.return_value.joinpath.assert_called_with(plugin_disabled_name)
 
 
-@mock.patch("server_manager.src.plugin.PLUGIN_DISABLED_NAME")
+@mock.patch("server_manager.src.plugin.PLUGIN_NAME")
 @mock.patch("server_manager.src.plugin.get_plugins_folder")
-def test_get_plugin_online_path(gpf_m, plugin_disabled_name):
+def test_get_plugin_online_path(gpf_m, plugin_name_m):
     result = get_plugin_online_path()
 
     assert gpf_m.return_value.joinpath.return_value == result
-    gpf_m.return_value.joinpath.assert_called_with(plugin_disabled_name)
+    gpf_m.return_value.joinpath.assert_called_with(plugin_name_m)
 
 
 class TestGetPluginMode:
