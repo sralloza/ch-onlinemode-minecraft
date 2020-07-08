@@ -19,6 +19,10 @@ class TestSetMode:
         self.spm_m = mock.patch(root + "set_plugin_mode").start()
         self.ssm_m = mock.patch(root + "set_server_mode").start()
 
+        yield
+
+        mock.patch.stopall()
+
     @pytest.mark.parametrize("new_mode", [False, True])
     def test_set_mode_fails_same_mode(self, new_mode, caplog):
         caplog.set_level(10)
