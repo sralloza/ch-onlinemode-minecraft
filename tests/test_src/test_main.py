@@ -144,7 +144,7 @@ class TestMain:
         for command in self.commands:
             if command == only_called:
                 continue
-            getattr(self.commands_m, only_called).assert_not_called
+            getattr(self.commands_m, command).assert_not_called()
 
     def test_backup(self):
         self.set_args({"command": "backup"})
