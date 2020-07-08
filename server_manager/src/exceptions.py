@@ -33,5 +33,9 @@ class SearchError(ServerManagerError):
     """Search error."""
 
 
+class SFKError(ServerManagerError):
+    """Error executing Swiss File Knife."""
+
+
 class SFKNotFoundError(ServerManagerError):
     """Swiss File Knife is not installed or is not in the PATH."""
