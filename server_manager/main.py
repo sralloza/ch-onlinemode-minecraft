@@ -1,8 +1,12 @@
 """Module interface with the command line."""
 
+import logging
 from argparse import ArgumentParser
 from typing import Any, Dict, NoReturn
 
+from server_manager.src.paths import get_server_path
+
+from .src.backup import create_backup
 from .src.checks import remove_players_safely
 from .src.files import File
 from .src.player import Player
@@ -11,6 +15,15 @@ from .src.properties_manager import get_server_mode
 from .src.set_mode import set_mode
 from .src.utils import str2bool
 from .src.whitelist import update_whitelist
+
+
+def setup_logging():
+    """Configure logging."""
+
+    fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
+    filename = get_server_path().with_name("lia-manager.log")
+    handlers = [logging.FileHandler(filename, "at", "utf8")]
+    logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
 
 class Parser:
@@ -42,15 +55,17 @@ class Parser:
         parser = ArgumentParser("server-manager")
         subparsers = parser.add_subparsers(dest="command")
 
+        subparsers.add_parser("backup")
+        subparsers.add_parser("data")
+        subparsers.add_parser("debug-files")
+        subparsers.add_parser("get-online-mode")
+        subparsers.add_parser("list")
+        subparsers.add_parser("reset-players")
+
         online_mode_parser = subparsers.add_parser("set-online-mode")
         online_mode_parser.add_argument("online-mode", type=str2bool)
 
-        subparsers.add_parser("get-online-mode")
-        subparsers.add_parser("list")
-        subparsers.add_parser("debug-files")
-        subparsers.add_parser("data")
         subparsers.add_parser("whitelist")
-        subparsers.add_parser("reset-players")
 
         cls.parser = parser
         return vars(parser.parse_args())
@@ -60,34 +75,43 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     """Main function."""
 
     args = Parser.parse_args()
+    setup_logging()
     command = args["command"]
 
-    if command == "get-online-mode":
-        return Commands.get_online_mode()
-
-    if command == "set-online-mode":
-        return Commands.set_online_mode(args["online-mode"])
+    if command == "backup":
+        return Commands.backup()
 
     if command == "data":
         return Commands.print_players_data()
 
-    if command == "list":
-        return Commands.list_players()
-
     if command == "debug-files":
         return Commands.print_files()
 
-    if command == "whitelist":
-        return Commands.update_whitelist()
+    if command == "get-online-mode":
+        return Commands.get_online_mode()
+
+    if command == "list":
+        return Commands.list_players()
 
     if command == "reset-players":
         return Commands.reset_players()
+
+    if command == "set-online-mode":
+        return Commands.set_online_mode(args["online-mode"])
+
+    if command == "whitelist":
+        return Commands.update_whitelist()
 
     return Parser.error("Must select command")
 
 
 class Commands:
     """All possible commands executed via command line."""
+
+    @classmethod
+    def backup(cls):
+        """Makes a backup of the minecraft server folder."""
+        create_backup()
 
     @classmethod
     def get_online_mode(cls):
