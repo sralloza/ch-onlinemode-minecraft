@@ -28,7 +28,7 @@ def get_plugin_offline_path() -> Path:
     """
 
     plugins_folder = get_plugins_folder()
-    return plugins_folder.joinpath(PLUGIN_NAME)
+    return plugins_folder.joinpath(PLUGIN_DISABLED_NAME)
 
 
 def get_plugin_online_path() -> Path:
@@ -39,7 +39,7 @@ def get_plugin_online_path() -> Path:
     """
 
     plugins_folder = get_plugins_folder()
-    return plugins_folder.joinpath(PLUGIN_DISABLED_NAME)
+    return plugins_folder.joinpath(PLUGIN_NAME)
 
 
 def get_plugin_mode() -> bool:
