@@ -50,20 +50,28 @@ class Parser:
             Dict[str, Any]: arguments parsed.
         """
 
-        parser = ArgumentParser("server-manager")
+        parser = ArgumentParser("lia")
         subparsers = parser.add_subparsers(dest="command")
 
-        subparsers.add_parser("backup")
-        subparsers.add_parser("data")
-        subparsers.add_parser("debug-files")
-        subparsers.add_parser("get-online-mode")
-        subparsers.add_parser("list")
-        subparsers.add_parser("reset-players")
+        subparsers.add_parser("backup", help="backup server")
+        subparsers.add_parser("get-online-mode", help="print current online-mode")
+        subparsers.add_parser(
+            "list-all-files", help="list all files containing player data in server"
+        )
+        subparsers.add_parser("list-csv-players", help="show players registered in csv")
+        subparsers.add_parser(
+            "list-server-players", help="show players found in server"
+        )
+        subparsers.add_parser("reset-players", help="remove all players safely")
 
         online_mode_parser = subparsers.add_parser("set-online-mode")
-        online_mode_parser.add_argument("online-mode", type=str2bool)
+        online_mode_parser.add_argument(
+            "online-mode", type=str2bool, help="new online-mode to set"
+        )
 
-        subparsers.add_parser("whitelist")
+        subparsers.add_parser(
+            "update-whitelist", help="update whitelist using csv data"
+        )
 
         cls.parser = parser
         return vars(parser.parse_args())
@@ -79,7 +87,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     if command == "backup":
         return Commands.backup()
 
-    if command == "data":
+    if command == "list-all-files":
         return Commands.print_players_data()
 
     if command == "debug-files":
@@ -88,7 +96,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     if command == "get-online-mode":
         return Commands.get_online_mode()
 
-    if command == "list":
+    if command == "list-csv-players":
         return Commands.list_players()
 
     if command == "reset-players":
@@ -97,7 +105,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
     if command == "set-online-mode":
         return Commands.set_online_mode(args["online-mode"])
 
-    if command == "whitelist":
+    if command == "update-whitelist":
         return Commands.update_whitelist()
 
     return Parser.error("Must select command")

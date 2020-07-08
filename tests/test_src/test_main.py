@@ -36,11 +36,36 @@ class TestParseArgs:
             return args
         finally:
             sys_argv_m.__getitem__.assert_called_once_with(slice(1, None, None))
-            assert Parser.parser.prog == "server-manager"
+            assert Parser.parser.prog == "lia"
 
     def test_backup(self):
         result = self.set_args("backup")
         assert result["command"] == "backup"
+        assert len(result) == 1
+
+    def test_get_online_mode(self):
+        result = self.set_args("get-online-mode")
+        assert result["command"] == "get-online-mode"
+        assert len(result) == 1
+
+    def test_list_all_files(self):
+        result = self.set_args("list-all-files")
+        assert result["command"] == "list-all-files"
+        assert len(result) == 1
+
+    def test_list_csv_players(self):
+        result = self.set_args("list-csv-players")
+        assert result["command"] == "list-csv-players"
+        assert len(result) == 1
+
+    def test_list_server_players(self):
+        result = self.set_args("list-server-players")
+        assert result["command"] == "list-server-players"
+        assert len(result) == 1
+
+    def test_reset_players(self):
+        result = self.set_args("reset-players")
+        assert result["command"] == "reset-players"
         assert len(result) == 1
 
     def test_set_online_mode_ok(self):
@@ -56,40 +81,15 @@ class TestParseArgs:
 
     def test_set_online_mode_fail_no_arg(self):
         with pytest.raises(SystemExit, match="2"):
-            self.set_args("online-mode")
+            self.set_args("set-online-mode")
 
-    def test_get_online_mode(self):
-        result = self.set_args("get-online-mode")
-        assert result["command"] == "get-online-mode"
-        assert len(result) == 1
-
-    def test_online_mode_fail_typerror(self):
+    def test_set_online_mode_fail_typerror(self):
         with pytest.raises(SystemExit, match="2"):
-            self.set_args("online-mode invalid")
+            self.set_args("set-online-mode invalid")
 
-    def test_list(self):
-        result = self.set_args("list")
-        assert result["command"] == "list"
-        assert len(result) == 1
-
-    def test_debug_files(self):
-        result = self.set_args("debug-files")
-        assert result["command"] == "debug-files"
-        assert len(result) == 1
-
-    def test_data(self):
-        result = self.set_args("data")
-        assert result["command"] == "data"
-        assert len(result) == 1
-
-    def test_whitelist(self):
-        result = self.set_args("whitelist")
-        assert result["command"] == "whitelist"
-        assert len(result) == 1
-
-    def test_reset_players(self):
-        result = self.set_args("reset-players")
-        assert result["command"] == "reset-players"
+    def test_update_whitelist(self):
+        result = self.set_args("update-whitelist")
+        assert result["command"] == "update-whitelist"
         assert len(result) == 1
 
     def test_no_command(self):
@@ -108,7 +108,7 @@ def test_parser_error(parse_args_m, capsys):
 
     captured = capsys.readouterr()
     assert "Custom error given to parser" in captured.err
-    assert "server-manager" in captured.err
+    assert "lia" in captured.err
     assert captured.out == ""
 
 
@@ -153,7 +153,7 @@ class TestMain:
         self.assert_only_call("backup")
 
     def test_print_players_data(self):
-        self.set_args({"command": "data"})
+        self.set_args({"command": "list-all-files"})
         main()
         self.commands_m.print_players_data.assert_called_once_with()
         self.assert_only_call("print_players_data")
@@ -171,7 +171,7 @@ class TestMain:
         self.assert_only_call("get_online_mode")
 
     def test_list_players(self):
-        self.set_args({"command": "list"})
+        self.set_args({"command": "list-csv-players"})
         main()
         self.commands_m.list_players.assert_called_once_with()
         self.assert_only_call("list_players")
@@ -189,7 +189,7 @@ class TestMain:
         self.assert_only_call("set_online_mode")
 
     def test_update_whitelist(self):
-        self.set_args({"command": "whitelist"})
+        self.set_args({"command": "update-whitelist"})
         main()
         self.commands_m.update_whitelist.assert_called_once_with()
         self.assert_only_call("update_whitelist")
