@@ -95,6 +95,8 @@ def run_sfk():
         )
         raise SFKError("Error running SFK")
 
+    logger.info("Backup created")
+
 
 def create_backup():
     """Creates a backup of the minecraft server using the Swiss File Knife.
