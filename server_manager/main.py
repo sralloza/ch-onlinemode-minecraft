@@ -1,12 +1,10 @@
 """Module interface with the command line."""
 
-import logging
 from argparse import ArgumentParser
+import logging
 from typing import Any, Dict, NoReturn
 
-from server_manager.src.paths import get_server_path
-
-from .src.backup import create_backup
+from .src.backup import create_backup, get_backups_folder
 from .src.checks import remove_players_safely
 from .src.files import File
 from .src.player import Player
@@ -21,7 +19,7 @@ def setup_logging():
     """Configure logging."""
 
     fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
-    filename = get_server_path().with_name("lia-manager.log")
+    filename = get_backups_folder().joinpath("lia-manager.log")
     handlers = [logging.FileHandler(filename, "at", "utf8")]
     logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
