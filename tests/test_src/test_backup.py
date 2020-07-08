@@ -1,3 +1,4 @@
+from subprocess import CalledProcessError
 from unittest import mock
 
 import pytest
@@ -20,24 +21,26 @@ class TestIsSfkInstalled:
         yield
         mock.patch.stopall()
 
-    @pytest.mark.parametrize("subprocess_return", [-1, 0, 1, 2])
-    @pytest.mark.parametrize("os", ["Linux", "Windows"])
-    def test_is_sfk_installed(self, os, subprocess_return):
-        self.system_m.return_value = os
-        self.run_m.return_value = mock.MagicMock(returncode=subprocess_return)
+    @pytest.mark.parametrize("fail", [False, True])
+    @pytest.mark.parametrize("system", ["Linux", "Windows"])
+    def test_is_sfk_installed(self, system, fail):
+        self.system_m.return_value = system
+        if fail:
+            self.run_m.side_effect = CalledProcessError(-1, "command")
 
         result = is_sfk_installed()
-        assert result == (not subprocess_return)
+        assert result == (not fail)
 
         self.run_m.assert_called_once()
         assert self.run_m.call_args[1] == {
             "stdin": self.devnull_m,
             "stdout": self.devnull_m,
             "stderr": self.devnull_m,
+            "check": True,
         }
         assert self.run_m.call_args[0][0][1] == "sfk"
 
-        if os == "Windows":
+        if system == "Windows":
             assert self.run_m.call_args[0][0][0] == "where"
         else:
             assert self.run_m.call_args[0][0][0] == "which"
@@ -82,16 +85,16 @@ class TestRunSfk:
         yield
         mock.patch.stopall()
 
-    @pytest.mark.parametrize("returncode", [-1, 0, 1, 2])
-    def test_run_sfk(self, returncode, caplog):
+    @pytest.mark.parametrize("fail", [False, True])
+    def test_run_sfk(self, fail, caplog):
         caplog.set_level(10)
         self.gsp_m.return_value.as_posix.return_value = "/path/to/server"
         self.gbzp_m.return_value.as_posix.return_value = "/path/to/zip"
-        self.run_m.return_value.returncode = returncode
-        self.run_m.return_value.stdin = "<stdin>"
-        self.run_m.return_value.stdout = "<stdout>"
-        self.run_m.return_value.stderr = "<stderr>"
-        fail = bool(returncode)
+
+        if fail:
+            self.run_m.side_effect = CalledProcessError(
+                -1, "command", output="<stdout>", stderr="<stderr>"
+            )
 
         if fail:
             with pytest.raises(SFKError, match="Error running SFK"):
@@ -107,15 +110,22 @@ class TestRunSfk:
         assert self.gbzp_m.return_value.as_posix.call_count == 2
 
         args = ["sfk", "zip", "/path/to/zip", "/path/to/server", "-yes"]
-        kwargs = {"stdin": self.devnull_m, "stdout": self.pipe_m, "stderr": self.pipe_m}
+        kwargs = {
+            "stdin": self.devnull_m,
+            "stdout": self.pipe_m,
+            "stderr": self.pipe_m,
+            "check": True,
+        }
 
         self.run_m.assert_called_once_with(args, **kwargs)
 
         if fail:
             assert len(caplog.records) == 2
 
-            assert caplog.records[1].msg =="Error running SFK (stdout=%s, stderr=%s)"
-            assert caplog.records[1].args == ("<stdout>", "<stderr>")
+            assert (
+                caplog.records[1].msg == "Error running SFK [%d] (stdout=%s, stderr=%s)"
+            )
+            assert caplog.records[1].args == (-1, "<stdout>", "<stderr>")
             assert caplog.records[1].levelname == "CRITICAL"
         else:
             assert len(caplog.records) == 1
