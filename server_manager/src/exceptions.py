@@ -31,3 +31,7 @@ class InvalidServerStateError(ServerManagerError):
 
 class SearchError(ServerManagerError):
     """Search error."""
+
+
+class SFKNotFoundError(ServerManagerError):
+    """Swiss File Knife is not installed or is not in the PATH."""

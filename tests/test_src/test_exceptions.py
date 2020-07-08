@@ -7,6 +7,7 @@ from server_manager.src.exceptions import (
     InvalidPlayerError,
     InvalidPluginStateError,
     InvalidServerStateError,
+    SFKNotFoundError,
     SearchError,
     ServerManagerError,
 )
@@ -82,3 +83,12 @@ class TestInvalidPlayerError:
     def test_raises(self):
         with pytest.raises(InvalidPlayerError):
             raise InvalidPlayerError
+
+
+class TestSFKNotFoundError:
+    def test_inheritance(self):
+        assert issubclass(SFKNotFoundError, ServerManagerError)
+
+    def test_raises(self):
+        with pytest.raises(SFKNotFoundError):
+            raise SFKNotFoundError
