@@ -211,7 +211,7 @@ class TestRemovePlayersSafely:
         yield
         mock.patch.stopall()
 
-    def test_ok(self, caplog):
+    def test_ok(self, caplog, capsys):
         caplog.set_level(10, "server_manager.src.checks")
         player = mock.MagicMock(username="p", online=True)
         player.get_ender_chest.return_value = []
@@ -219,6 +219,7 @@ class TestRemovePlayersSafely:
         players = [player] * 5
 
         remove_players_safely(players)
+        captured = capsys.readouterr()
 
         assert len(caplog.records) == 10
         records = iter(caplog.records)
@@ -229,6 +230,9 @@ class TestRemovePlayersSafely:
             rec2 = next(records)
             assert rec2.levelname == "INFO"
             assert rec2.message == "Removed player p [True]"
+
+        assert captured.out == ""
+        assert captured.err == ""
 
     def test_fail_inventory(self, caplog, capsys):
         caplog.set_level(10, "server_manager.src.checks")
@@ -259,7 +263,7 @@ class TestRemovePlayersSafely:
 
         assert captured.out == ""
 
-    def test_fail_ender_chest(self, caplog):
+    def test_fail_ender_chest(self, caplog, capsys):
         caplog.set_level(10, "server_manager.src.checks")
         player = mock.MagicMock(username="p", online=True)
         player.get_ender_chest.return_value = ["a", "b", "c"]
@@ -269,19 +273,26 @@ class TestRemovePlayersSafely:
 
         remove_players_safely(players)
 
+        captured = capsys.readouterr()
         assert len(caplog.records) == 10
         records = iter(caplog.records)
+
         for rec1 in records:
             assert rec1.levelname == "DEBUG"
             assert rec1.message == "Analysing player p [True]"
 
             rec2 = next(records)
+            msg = "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
+            args = ("<ext-repr>", 3, 0)
+
             assert rec2.levelname == "ERROR"
-            assert (
-                rec2.msg
-                == "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
-            )
-            assert rec2.args == ("<ext-repr>", 3, 0)
+            assert rec2.msg == msg
+            assert rec2.args == args
+
+            print_msg = Fore.LIGHTRED_EX + msg % args + Fore.RESET + "\n"
+            assert print_msg in captured.err
+
+        assert captured.out == ""
 
     def test_fail_both(self, caplog):
         caplog.set_level(10, "server_manager.src.checks")
@@ -307,3 +318,37 @@ class TestRemovePlayersSafely:
             )
             assert rec2.args == ("<ext-repr>", 3, 5)
         player.remove.assert_not_called()
+
+    def test_ok_force(self, caplog, capsys):
+        caplog.set_level(10, "server_manager.src.checks")
+        player = mock.MagicMock(username="p", online=True)
+        player.get_ender_chest.return_value = ["a", "b", "c"]
+        player.get_inventory.return_value = ["a", "b", "c", "d", "e"]
+        player.to_extended_repr.return_value = "<ext-repr>"
+
+        players = [player] * 5
+
+        remove_players_safely(players, force=True)
+
+        captured = capsys.readouterr()
+        assert len(caplog.records) == 15
+        records = iter(caplog.records)
+
+        for rec1 in records:
+            assert rec1.levelname == "DEBUG"
+            assert rec1.message == "Analysing player p [True]"
+
+            rec2 = next(records)
+            msg = "Removing player %s (ender-chest=%d, inventory=%d)"
+            args = ("<ext-repr>", 3, 5)
+            assert rec2.levelname == "WARNING"
+            assert rec2.msg == msg
+            assert rec2.args == args
+
+            assert Fore.LIGHTYELLOW_EX + msg % args + Fore.RESET + "\n" in captured.out
+
+            rec3 = next(records)
+            assert rec3.levelname == "INFO"
+            assert rec3.message == "Removed player p [True]"
+
+        assert captured.err == ""
