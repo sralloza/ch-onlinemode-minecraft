@@ -63,10 +63,17 @@ class TestParseArgs:
         assert result["command"] == "list-server-players"
         assert len(result) == 1
 
-    def test_reset_players(self):
+    def test_reset_players_true(self):
         result = self.set_args("reset-players")
         assert result["command"] == "reset-players"
-        assert len(result) == 1
+        assert result["force"] is False
+        assert len(result) == 2
+
+    def test_reset_playesr_with_force(self):
+        result = self.set_args("reset-players --force")
+        assert result["command"] == "reset-players"
+        assert result["force"] is True
+        assert len(result) == 2
 
     def test_set_online_mode_ok(self):
         result = self.set_args("set-online-mode true")
@@ -190,9 +197,9 @@ class TestMain:
         self.assert_only_call("list_players")
 
     def test_reset_players(self):
-        self.set_args({"command": "reset-players"})
+        self.set_args({"command": "reset-players", "force": "<force>"})
         main()
-        self.commands_m.reset_players.assert_called_once_with()
+        self.commands_m.reset_players.assert_called_once_with("<force>")
         self.assert_only_call("reset_players")
 
     def test_set_online_mode(self):
@@ -385,7 +392,7 @@ class TestCommand:
         assert result.err == ""
 
     def test_reset_players(self, capsys):
-        Commands.reset_players()
+        Commands.reset_players("<force>")
 
         self.backup_m.assert_not_called()
         self.gsv_m.assert_not_called()
@@ -395,7 +402,9 @@ class TestCommand:
         self.get_mode_m.assert_not_called()
         self.memory_m.assert_not_called()
         self.update_wl_m.assert_not_called()
-        self.rps_m.assert_called_once_with(self.player_gen_m.return_value)
+        self.rps_m.assert_called_once_with(
+            self.player_gen_m.return_value, force="<force>"
+        )
 
         result = capsys.readouterr()
         assert result.out == ""

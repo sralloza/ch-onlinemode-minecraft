@@ -55,28 +55,44 @@ class Parser:
             Dict[str, Any]: arguments parsed.
         """
 
+        helpers = {
+            "backup": "backup server",
+            "debug-files": "list all files containing player data in server",
+            "get-online-mode": "print current online-mode",
+            "list-csv-players": "show players registered in csv",
+            "list-server-players": "show players found in server",
+            "reset-players": "remove all players safely",
+            "reset-players-force": "forces removal of players",
+            "set-online-mode": "set a new online-mode",
+            "set-online-mode-arg": "new online-mode to set",
+            "update-whitelist": "update whitelist using csv data",
+        }
+
         parser = ArgumentParser("lia")
         subparsers = parser.add_subparsers(dest="command")
 
-        subparsers.add_parser("backup", help="backup server")
+        subparsers.add_parser("backup", help=helpers["backup"])
+        subparsers.add_parser("debug-files", help=helpers["debug-files"])
+        subparsers.add_parser("get-online-mode", help=helpers["get-online-mode"])
+        subparsers.add_parser("list-csv-players", help=helpers["list-csv-players"])
         subparsers.add_parser(
-            "debug-files", help="list all files containing player data in server"
+            "list-server-players", help=helpers["list-server-players"]
         )
-        subparsers.add_parser("get-online-mode", help="print current online-mode")
-        subparsers.add_parser("list-csv-players", help="show players registered in csv")
-        subparsers.add_parser(
-            "list-server-players", help="show players found in server"
+        reset_parser = subparsers.add_parser(
+            "reset-players", help=helpers["reset-players"]
         )
-        subparsers.add_parser("reset-players", help="remove all players safely")
+        reset_parser.add_argument(
+            "--force", action="store_true", help=helpers["reset-players-force"]
+        )
 
-        online_mode_parser = subparsers.add_parser("set-online-mode")
+        online_mode_parser = subparsers.add_parser(
+            "set-online-mode", help=helpers["set-online-mode"]
+        )
         online_mode_parser.add_argument(
-            "online-mode", type=str2bool, help="new online-mode to set"
+            "online-mode", type=str2bool, help=helpers["set-online-mode-arg"]
         )
 
-        subparsers.add_parser(
-            "update-whitelist", help="update whitelist using csv data"
-        )
+        subparsers.add_parser("update-whitelist", help=helpers["update-whitelist"])
 
         cls.parser = parser
         return vars(parser.parse_args())
@@ -105,7 +121,7 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
         return Commands.list_players()
 
     if command == "reset-players":
-        return Commands.reset_players()
+        return Commands.reset_players(args["force"])
 
     if command == "set-online-mode":
         return Commands.set_online_mode(args["online-mode"])
@@ -186,11 +202,17 @@ class Commands:
         return update_whitelist()
 
     @classmethod
-    def reset_players(cls):
+    def reset_players(cls, force: bool) -> bool:
         """Removes all the players data if each player has the ender chest
         and the inventory emtpy.
 
+        Args:
+            force (bool): if True, inventory and ender chest checkers
+                will be ignored.
+
+        Returns:
+            bool: True if all players were able to be removed, False otherwise.
         """
 
         players = Player.generate()
-        return remove_players_safely(players)
+        return remove_players_safely(players, force=force)

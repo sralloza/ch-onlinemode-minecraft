@@ -145,12 +145,14 @@ def group_players(iterable: List[Player], key=None) -> List[Tuple[str, List[Play
     return [(x, list(y)) for x, y in groupby(iterable, key)]
 
 
-def remove_players_safely(players: List[Player]) -> bool:
-    """If some player has an data file with an invalid id, that file
-    will be removed if its inventory and its ender chest is empty.
+def remove_players_safely(players: List[Player], force=False) -> bool:
+    """Removes players if their inventory and ender chest is emtpy. This filter can
+    be bypassed by the `force` argument.
 
     Args:
-        players (List[Players]): list of players to fix?
+        players (List[Players]): list of players to remove.
+        force (optional, bool): if True, inventory and ender chest checkers
+            will be ignored. Defaults to False.
 
     Returns:
         bool: True if all players were able to be removed, False otherwise.
@@ -167,12 +169,19 @@ def remove_players_safely(players: List[Player]) -> bool:
         if ender_chest or inventory:
             ender_chest = len(ender_chest)
             inventory = len(inventory)
-            msg = "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
+
+            if not force:
+                msg = "Can't remove player %s\nItems: ender_chest=%d, inventory=%d"
+                args = (player.to_extended_repr(), ender_chest, inventory)
+                logger.error(msg, *args)
+                print(Fore.LIGHTRED_EX + msg % args + Fore.RESET, file=sys.stderr)
+                error = True
+                continue
+
+            msg = "Removing player %s (ender-chest=%d, inventory=%d)"
             args = (player.to_extended_repr(), ender_chest, inventory)
-            logger.error(msg, *args)
-            print(Fore.LIGHTRED_EX + msg % args + Fore.RESET, file=sys.stderr)
-            error = True
-            continue
+            logger.warning(msg, *args)
+            print(Fore.LIGHTYELLOW_EX + msg % args + Fore.RESET)
 
         player.remove()
         logger.info("Removed player %s [%s]", player.username, player.online)
