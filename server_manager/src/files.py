@@ -46,7 +46,7 @@ class File(metaclass=MetaFile):
     """
 
     uuid_pattern = re.compile(
-        r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
+        r"([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.\w+(?<!_old)$"
     )
 
     # For hinting purposes only (it is declared inside `MetaFile`)
@@ -80,7 +80,7 @@ class File(metaclass=MetaFile):
         """
 
         try:
-            return self.uuid_pattern.search(self.path.as_posix()).group()
+            return self.uuid_pattern.search(self.path.as_posix()).group(1)
         except AttributeError:
             raise InvalidFileError(f"{self.path} does not contain a uuid")
 

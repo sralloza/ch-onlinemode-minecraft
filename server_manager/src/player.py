@@ -152,7 +152,7 @@ class Player:
             for file in file_group:
                 # match must be always true, trust File.memory
                 match = File.uuid_pattern.search(file.path.as_posix())
-                uuid = match.group()
+                uuid = match.group(1)
                 files_map[uuid].append(file)
         players = [Player(uuid, *files_map[uuid]) for uuid in files_map]
         players.sort(key=lambda x: x.username)
