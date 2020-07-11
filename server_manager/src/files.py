@@ -46,7 +46,8 @@ class File(metaclass=MetaFile):
     """
 
     uuid_pattern = re.compile(
-        r"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}"
+        r"([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}"
+        r"\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.\w+(?<!_old)$"
     )
 
     # For hinting purposes only (it is declared inside `MetaFile`)
@@ -68,6 +69,9 @@ class File(metaclass=MetaFile):
     def __eq__(self, other: DataFile):
         return self.path == other.path
 
+    def __repr__(self):
+        return f"{type(self).__name__}({self.as_posix()!r})"
+
     @property
     def uuid(self) -> str:
         """Returns the uuid of the player which data is in the file.
@@ -79,10 +83,28 @@ class File(metaclass=MetaFile):
             str: uuid.
         """
 
-        try:
-            return self.uuid_pattern.search(self.path.as_posix()).group()
-        except AttributeError:
+        uuid = self.get_uuid_from_filepath(self.path)
+        if not uuid:
             raise InvalidFileError(f"{self.path} does not contain a uuid")
+        return uuid
+
+    @classmethod
+    def get_uuid_from_filepath(cls, filepath: Union[str, Path]) -> Optional[str]:
+        """Returns the uuid given the filepath.
+
+        Args:
+            filepath (Union[str, Path]): filepath.
+
+        Returns:
+            Optional[str]: the uuid if success, None otherwise.
+        """
+
+        filepath = Path(filepath)
+
+        try:
+            return cls.uuid_pattern.search(filepath.as_posix()).group(1)
+        except AttributeError:
+            return None
 
     def read_bytes(self) -> bytes:
         """Returns the file content in bytes.
@@ -155,13 +177,11 @@ class File(metaclass=MetaFile):
         for root, _, files in os.walk(path):
             for filename in files:
                 file = Path(root).joinpath(filename)
-                match = cls.uuid_pattern.search(file.as_posix())
-                if match:
+                uuid = cls.get_uuid_from_filepath(file)
+
+                if uuid:
                     File.identify(file)
         logger.info("files generated")
-
-    def __repr__(self):
-        return f"{type(self).__name__}({self.as_posix()!r})"
 
 
 class PlayerDataFile(File):
