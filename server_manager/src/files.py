@@ -46,7 +46,8 @@ class File(metaclass=MetaFile):
     """
 
     uuid_pattern = re.compile(
-        r"([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.\w+(?<!_old)$"
+        r"([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}"
+        r"\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.\w+(?<!_old)$"
     )
 
     # For hinting purposes only (it is declared inside `MetaFile`)
@@ -89,6 +90,15 @@ class File(metaclass=MetaFile):
 
     @classmethod
     def get_uuid_from_filepath(cls, filepath: Union[str, Path]) -> Optional[str]:
+        """Returns the uuid given the filepath.
+
+        Args:
+            filepath (Union[str, Path]): filepath.
+
+        Returns:
+            Optional[str]: the uuid if success, None otherwise.
+        """
+
         filepath = Path(filepath)
 
         try:
