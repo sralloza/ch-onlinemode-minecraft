@@ -316,6 +316,10 @@ class TestGenerate:
         assert repr(CustomPlayer(1, 2, 3)) == "CustomPlayer(uuid=1, files=(2, 3))"
 
         File.uuid_pattern = re.compile(r"<[-\w]+>")
+        self.guff = mock.patch(
+            "server_manager.src.files.File.get_uuid_from_filepath"
+        ).start()
+        self.guff.side_effect = lambda file: re.search(r"<(\w+)>", str(file)).group()
         self.gf_m = mock.patch("server_manager.src.files.File.gen_files").start()
         self.pl_m = mock.patch("server_manager.src.player.Player").start()
         self.pl_m.side_effect = CustomPlayer

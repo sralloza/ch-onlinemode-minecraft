@@ -116,10 +116,11 @@ class TestFile:
     def test_uuid_pattern(self):
         test = File.uuid_pattern.search
 
-        assert test("00000000-0000-0000-0000-000000000000")
-        assert test("550e8400-e29b-41d4-a716-446655440000")
-        assert test("00000000-0000-0000-C000-000000000046")
-        assert test("01234567-89ab-cdef-0123-456789abcdef")
+        assert test("00000000-0000-0000-0000-000000000000.dat")
+        assert test("550e8400-e29b-41d4-a716-446655440000.dat")
+        assert test("00000000-0000-0000-C000-000000000046.dat")
+        assert test("01234567-89ab-cdef-0123-456789abcdef.dat")
+        assert not test("01234567-89ab-cdef-0123-456789abcdef.dat_old")
         assert not test("xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx")
         assert not test("invalid-uuid")
 
@@ -174,6 +175,16 @@ class TestFile:
 
         assert not_uuid("/var/invalid/xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx.invalid")
         assert not_uuid("/home/user/test/invalid-uuid.png")
+
+    def test_get_uuid_from_filepath(self):
+        test = File.get_uuid_from_filepath
+        assert test("path/file-00000000-0000-0000-0000-000000000000.json")
+        assert test("path/file-550e8400-e29b-41d4-a716-446655440000.dat")
+        assert not test("path/file-550e8400-e29b-41d4-a716-446655440000.dat_old")
+        assert test("path/file-00000000-0000-0000-C000-000000000046.xml")
+
+        assert not test("/var/invalid/xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx.invalid")
+        assert not test("/home/user/test/invalid-uuid.png")
 
     @mock.patch("pathlib.Path.read_bytes")
     def test_read_bytes(self, read_m, file_creator):
@@ -299,7 +310,7 @@ class TestFile:
                 [zeros + "a1.json", zeros + "a2.json", zeros + "a3.json",],
             ),
             ("./typeb", [], [zeros + "b1.json", zeros + "b2.json",],),
-            ("./hidden", ["typec", "invalid-type"], []),
+            ("./hidden", ["typec", "invalid-type", zeros + "c0.dat_old"], []),
             ("./hidden/invalid-type", [], ["a.pdf", "b.pdf", "c.pdf"]),
             ("./hidden/typec", [], [zeros + "c1.json"]),
         )
