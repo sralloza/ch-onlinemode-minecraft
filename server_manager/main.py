@@ -7,6 +7,7 @@ from typing import Any, Dict, NoReturn
 from .src.backup import create_backup, get_backups_folder
 from .src.checks import remove_players_safely
 from .src.files import File
+from .src.paths import get_server_path
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
 from .src.properties_manager import get_server_mode
@@ -190,7 +191,7 @@ class Commands:
     def print_files(cls):
         """Prints all the files containing players data."""
 
-        Player.generate()
+        File.gen_files(get_server_path())
         for key in File.memory:
             for file in File.memory[key]:
                 print(file)
