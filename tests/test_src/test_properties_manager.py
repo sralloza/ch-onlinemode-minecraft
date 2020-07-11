@@ -8,7 +8,6 @@ from server_manager.src.exceptions import InvalidServerStateError
 from server_manager.src.properties_manager import (
     get_server_mode,
     get_server_properties_filepath,
-    properties_manager,
     set_server_mode,
     validate_server_path,
 )
@@ -43,10 +42,29 @@ def test_validate_server_path_fail(gspf_m, capsys):
     assert captured.out == ""
 
 
-def test_get_server_properties_filepath():
+@mock.patch("server_manager.src.properties_manager.get_server_path")
+def test_get_server_properties_filepath(gsp_m):
+    gsp_m.return_value = "<server-path>"
+
     expected = Path("/var/minecraft/server/server.properties")
     result = get_server_properties_filepath("/var/minecraft/server")
     assert result == expected
+
+    result = get_server_properties_filepath()
+    assert result == Path("<server-path>/server.properties")
+    gsp_m.assert_called_once_with()
+
+    # Test LRU cache
+    result = get_server_properties_filepath()
+    assert result == Path("<server-path>/server.properties")
+    gsp_m.assert_called_once_with()
+
+    get_server_properties_filepath.cache_clear()
+
+    result = get_server_properties_filepath()
+    assert result == Path("<server-path>/server.properties")
+    gsp_m.assert_called()
+    assert gsp_m.call_count == 2
 
 
 class TestPropertiesManager:

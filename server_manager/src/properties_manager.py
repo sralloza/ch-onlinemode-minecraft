@@ -32,6 +32,7 @@ def validate_server_path(server_path: str):
         sys.exit(-1)
 
 
+@lru_cache(maxsize=10)
 def get_server_properties_filepath(server_path: str = None) -> Path:
     """Returns the path of the server properties file (`server.properties`).
 
