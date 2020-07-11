@@ -1,7 +1,6 @@
-"""Manages the properties of the minecraft server (`server.properties`),
-especially `online-mode`.
-"""
+"""Manages the properties of the minecraft server (`server.properties`)."""
 
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 import re
@@ -14,6 +13,9 @@ from .paths import get_server_path
 from .utils import bool2str, str2bool
 
 ONLINE_MODE_PATTERN: re.Pattern = re.compile(r"(online-mode=)(\w+)", re.IGNORECASE)
+class Properties(Enum):
+    online_mode = "online-mode"
+    whitelist = "whitelist"
 
 
 def validate_server_path(server_path: str):

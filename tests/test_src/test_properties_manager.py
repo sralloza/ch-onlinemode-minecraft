@@ -6,11 +6,30 @@ import pytest
 
 from server_manager.src.exceptions import InvalidServerStateError
 from server_manager.src.properties_manager import (
+    Properties,
     get_server_mode,
     get_server_properties_filepath,
     set_server_mode,
     validate_server_path,
 )
+
+
+class TestPropertiesEnum:
+    def test_members_values(self):
+        assert Properties.online_mode == Properties("online-mode")
+        assert Properties.whitelist == Properties("whitelist")
+
+    def test_members_names(self):
+        assert Properties.online_mode == Properties["online_mode"]
+        assert Properties.whitelist == Properties["whitelist"]
+
+    def test_length(self):
+        assert len(Properties) == 2
+
+    def test_types(self):
+        for prop in Properties:
+            assert isinstance(prop.name, str)
+            assert isinstance(prop.value, str)
 
 
 @mock.patch("server_manager.src.properties_manager.get_server_properties_filepath")
