@@ -449,8 +449,8 @@ class TestCommand:
 
     @pytest.mark.parametrize("fail", [False, True])
     def test_show_player(self, capsys, fail):
-        jeb = mock.MagicMock(username="jeb")
-        notch = mock.MagicMock(username="notch")
+        jeb = mock.MagicMock(username="Jeb")
+        notch = mock.MagicMock(username="Notch")
         notch.get_detailed_inventory.return_value = "<inv>"
         notch.get_detailed_ender_chest.return_value = "<end-chest>"
         players = [jeb]

@@ -241,9 +241,10 @@ class Commands:
             InvalidPlayerError: if the player doesn't exist.
         """
 
+        player_name = player_name.lower()
         players = Player.generate()
         for player in players:
-            if player.username == player_name:
+            if player.username.lower() == player_name:
                 print("Inventory:")
                 print(player.get_detailed_inventory())
                 print("\nEnder chest:")
