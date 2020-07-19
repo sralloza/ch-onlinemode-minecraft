@@ -213,24 +213,63 @@ def test_get_nbt_data(player_mocks):
     player.advancements_file = af_m
 
     nbt_data = player.get_nbt_data()
-    assert len(nbt_data) == 38
+    assert len(nbt_data) == 52
     assert nbt_data["AbsorptionAmount"] == 0
-    assert nbt_data["DataVersion"] == 1343
-    assert nbt_data["DeathTime"] == 6650
-    assert nbt_data["Dimension"] == 0
-    assert nbt_data["EnderItems"] == []
-    assert nbt_data["Fire"] == -20
-    assert nbt_data["HurtByTimestamp"] == 4920
-    assert nbt_data["Inventory"] == []
+    assert nbt_data["DataVersion"] == 2567
+    assert nbt_data["DeathTime"] == 0
+    assert nbt_data["Dimension"] == "minecraft:overworld"
+    assert len(nbt_data["EnderItems"]) == 15
+    assert nbt_data["Fire"] == 0
+    assert nbt_data["HurtByTimestamp"] == 2183960
+    assert len(nbt_data["Inventory"]) == 10
     assert nbt_data["Motion"][0] == 0
-    assert nbt_data["Motion"][1] == -0.0784000015258789
+    assert nbt_data["Motion"][1] == 0
     assert nbt_data["Motion"][2] == 0
-    assert nbt_data["OnGround"] == 1
+    assert nbt_data["OnGround"] == 0
     assert nbt_data["PortalCooldown"] == 0
-    assert nbt_data["foodLevel"] == 16
-    assert nbt_data["seenCredits"] == 0
+    assert nbt_data["foodLevel"] == 17
+    assert nbt_data["seenCredits"] == 1
 
     pdf_m.read_bytes.assert_called_once_with()
+
+
+def test_analyse_items(player_mocks):
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    pdf_m = mock.MagicMock()
+    nbt_path = Path(__file__).parent.parent.joinpath("test_data/nbt-example.dat")
+    pdf_m.read_bytes.return_value = nbt_path.read_bytes()
+    sf_m = mock.MagicMock()
+    af_m = mock.MagicMock()
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+    player.player_data_file = pdf_m
+    player.stats_file = sf_m
+    player.advancements_file = af_m
+
+    nbt_data = player.get_nbt_data()
+    items = player.analyse_items(nbt_data["Inventory"])
+    expected_items = {
+        "andesite": 6,
+        "cobblestone": 16,
+        "diorite": 36,
+        "flint and steel": 1,
+        "gravel": 3,
+        "orange terracotta": 8,
+        "red terracotta": 9,
+        "stone": 1,
+        "tnt": 1,
+        "torch": 1,
+    }
+    expected_items = [Item(k, v) for k, v in expected_items.items()]
+    expected_items.sort(key=lambda x: x.name)
+    assert items == expected_items
 
 
 @mock.patch("server_manager.src.player.Player.get_nbt_data")
@@ -249,6 +288,23 @@ def test_get_inventory(gnbtd_m, player_mocks):
     assert player.get_inventory() == "<inventory>"
 
 
+@mock.patch("server_manager.src.player.Player.analyse_items")
+@mock.patch("server_manager.src.player.Player.get_inventory")
+def test_get_detailed_inventory(get_inv_m, analyse_m, player_mocks):
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+    assert player.get_detailed_inventory() == analyse_m.return_value
+    analyse_m.assert_called_once_with(get_inv_m.return_value)
+    get_inv_m.assert_called_once_with()
+
+
 @mock.patch("server_manager.src.player.Player.get_nbt_data")
 def test_get_ender_chest(gnbtd_m, player_mocks):
     gnbtd_m.return_value = {"EnderItems": "<ender-items>"}
@@ -263,6 +319,23 @@ def test_get_ender_chest(gnbtd_m, player_mocks):
     player = Player("<uuid>", adv_file, stats_file, data_file)
 
     assert player.get_ender_chest() == "<ender-items>"
+
+
+@mock.patch("server_manager.src.player.Player.analyse_items")
+@mock.patch("server_manager.src.player.Player.get_ender_chest")
+def test_get_detailed_ender_chest(get_inv_m, analyse_m, player_mocks):
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+    assert player.get_detailed_ender_chest() == analyse_m.return_value
+    analyse_m.assert_called_once_with(get_inv_m.return_value)
+    get_inv_m.assert_called_once_with()
 
 
 def test_remove(player_mocks):
