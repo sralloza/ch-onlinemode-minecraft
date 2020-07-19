@@ -15,6 +15,28 @@ from .players_data import get_mode, get_username, get_uuid
 from .properties_manager import get_server_path
 
 
+class Item:
+    """Simple representation of an item, detailing name and count.
+
+    Args:
+        name (str): name of the item (given by minecraft's id).
+        count (int): number of items.
+    """
+
+    def __init__(self, name: str, count: int):
+        self.name = name
+        self.count = count
+
+    def __str__(self):
+        return f"Item(name={self.name!r}, count={self.count})"
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
 class Player:
     """Represents a player."""
 

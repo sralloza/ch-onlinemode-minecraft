@@ -7,9 +7,33 @@ import pytest
 
 from server_manager.src.exceptions import InvalidPlayerError
 from server_manager.src.files import AdvancementsFile, File, PlayerDataFile, StatsFile
-from server_manager.src.player import Player, change_players_mode
+from server_manager.src.player import Item, Player, change_players_mode
 
 # pylint: disable=redefined-outer-name
+
+
+class TestItem:
+    @pytest.fixture
+    def item(self):
+        yield Item("netherite sword", 4)
+
+    def test_attributes(self, item):
+        assert isinstance(item, Item)
+        assert hasattr(item, "name")
+        assert hasattr(item, "count")
+        assert isinstance(item.name, str)
+        assert isinstance(item.count, int)
+
+    def test_str(self, item):
+        assert str(item) == "Item(name='netherite sword', count=4)"
+
+    def test_repr(self, item):
+        assert str(item) == repr(item)
+
+    def test_eq(self, item):
+        assert item == Item("netherite sword", 4)
+        assert item != Item("netherite ingot", 4)
+        assert item != Item("netherite sword", 5)
 
 
 @pytest.fixture
