@@ -1,9 +1,11 @@
-import shlex
 from dataclasses import dataclass
+import shlex
 from unittest import mock
 
 import pytest
+
 from server_manager.main import Commands, Parser, main, setup_logging
+from server_manager.src.exceptions import InvalidPlayerError
 
 
 @mock.patch("logging.FileHandler")
@@ -94,6 +96,16 @@ class TestParseArgs:
         with pytest.raises(SystemExit, match="2"):
             self.set_args("set-online-mode invalid")
 
+    def test_show_player_ok(self):
+        result = self.set_args("show-player notch")
+        assert result["command"] == "show-player"
+        assert result["player"] == "notch"
+        assert len(result) == 2
+
+    def test_show_player_no_arg(self):
+        with pytest.raises(SystemExit, match="2"):
+            self.set_args("show-player")
+
     def test_update_whitelist(self):
         result = self.set_args("update-whitelist")
         assert result["command"] == "update-whitelist"
@@ -147,6 +159,7 @@ class TestMain:
             "list_players",
             "reset_players",
             "set_online_mode",
+            "show_player",
             "update_whitelist",
         ]
 
@@ -207,6 +220,12 @@ class TestMain:
         main()
         self.commands_m.set_online_mode.assert_called_once_with("<om>")
         self.assert_only_call("set_online_mode")
+
+    def test_show_player(self):
+        self.set_args({"command": "show-player", "player": "notch"})
+        main()
+        self.commands_m.show_player.assert_called_once_with("notch")
+        self.assert_only_call("show_player")
 
     def test_update_whitelist(self):
         self.set_args({"command": "update-whitelist"})
@@ -427,3 +446,54 @@ class TestCommand:
         result = capsys.readouterr()
         assert result.out == ""
         assert result.err == ""
+
+    @pytest.mark.parametrize("fail", [False, True])
+    def test_show_player(self, capsys, fail):
+        jeb = mock.MagicMock(username="Jeb")
+        notch = mock.MagicMock(username="Notch")
+        notch.get_detailed_inventory.return_value = "<inv>"
+        notch.get_detailed_ender_chest.return_value = "<end-chest>"
+        players = [jeb]
+
+        if not fail:
+            players.append(notch)
+        self.player_gen_m.return_value = players
+
+        if fail:
+            msg = "Player named 'notch' doesn't exist"
+            with pytest.raises(InvalidPlayerError, match=msg):
+                Commands.show_player("notch")
+        else:
+            Commands.show_player("notch")
+
+        self.backup_m.assert_not_called()
+        self.gsv_m.assert_not_called()
+        self.set_mode_m.assert_not_called()
+        self.gpd_m.assert_not_called()
+        self.player_gen_m.assert_called_once_with()
+        self.get_mode_m.assert_not_called()
+        self.gsp_m.assert_not_called()
+        self.gen_files_m.assert_not_called()
+        self.memory_m.assert_not_called()
+        self.update_wl_m.assert_not_called()
+        self.rps_m.assert_not_called()
+
+        if not fail:
+            result = capsys.readouterr()
+            out = "Inventory:\n<inv>\n\nEnder chest:\n<end-chest>\n"
+            assert result.out == out
+            assert result.err == ""
+
+            notch.get_detailed_inventory.assert_called_once_with()
+            notch.get_detailed_ender_chest.assert_called_once_with()
+
+        else:
+            result = capsys.readouterr()
+            assert result.out == ""
+            assert result.err == ""
+
+            notch.get_detailed_inventory.assert_not_called()
+            notch.get_detailed_ender_chest.assert_not_called()
+
+        jeb.get_detailed_inventory.assert_not_called()
+        jeb.get_detailed_ender_chest.assert_not_called()

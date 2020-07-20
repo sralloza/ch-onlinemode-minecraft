@@ -6,6 +6,7 @@ from typing import Any, Dict, NoReturn
 
 from .src.backup import create_backup, get_backups_folder
 from .src.checks import remove_players_safely
+from .src.exceptions import InvalidPlayerError
 from .src.files import File
 from .src.paths import get_server_path
 from .src.player import Player
@@ -66,6 +67,8 @@ class Parser:
             "reset-players-force": "forces removal of players",
             "set-online-mode": "set a new online-mode",
             "set-online-mode-arg": "new online-mode to set",
+            "show-player": "print detailed inventory and ender chest of player",
+            "show-player-arg": "player to show",
             "update-whitelist": "update whitelist using csv data",
         }
 
@@ -93,6 +96,12 @@ class Parser:
             "online-mode", type=str2bool, help=helpers["set-online-mode-arg"]
         )
 
+        show_player_parser = subparsers.add_parser(
+            "show-player", help=helpers["show-player"]
+        )
+        show_player_parser.add_argument(
+            "player", type=str, help=helpers["show-player-arg"]
+        )
         subparsers.add_parser("update-whitelist", help=helpers["update-whitelist"])
 
         cls.parser = parser
@@ -126,6 +135,9 @@ def main():  # pylint: disable=too-many-return-statements, inconsistent-return-s
 
     if command == "set-online-mode":
         return Commands.set_online_mode(args["online-mode"])
+
+    if command == "show-player":
+        return Commands.show_player(args["player"])
 
     if command == "update-whitelist":
         return Commands.update_whitelist()
@@ -217,3 +229,26 @@ class Commands:
 
         players = Player.generate()
         return remove_players_safely(players, force=force)
+
+    @classmethod
+    def show_player(cls, player_name: str):
+        """Prints the detailed items in the inventory and ender chest of the player.
+
+        Args:
+            player_name (str): name of the player to show.
+
+        Raises:
+            InvalidPlayerError: if the player doesn't exist.
+        """
+
+        player_name = player_name.lower()
+        players = Player.generate()
+        for player in players:
+            if player.username.lower() == player_name:
+                print("Inventory:")
+                print(player.get_detailed_inventory())
+                print("\nEnder chest:")
+                print(player.get_detailed_ender_chest())
+                return
+
+        raise InvalidPlayerError(f"Player named {player_name!r} doesn't exist")
