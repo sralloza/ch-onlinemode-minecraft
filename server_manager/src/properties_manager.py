@@ -18,12 +18,14 @@ class Patterns:
     whitelist_1 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
     whitelist_2 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
     allow_nether = re.compile(r"(allow-nether=)(\w+)", re.IGNORECASE)
+    difficulty = re.compile(r"(difficulty=)(\w+)", re.IGNORECASE)
 
 
 class Properties(Enum):
     online_mode = "online-mode"
     whitelist = "whitelist"
     allow_nether = "allow-nether"
+    difficulty = "difficulty"
 
 
 def validate_server_path(server_path: str):
@@ -185,6 +187,28 @@ class AllowNetherProperty:
 
         file_data = PropertiesManager.get_properties_raw()
         file_data = Patterns.allow_nether.sub(r"\1" + bool2str(nether_mode), file_data)
+        PropertiesManager.write_properties_raw(file_data)
+        return
+
+
+@PropertiesManager.register_property("difficulty")
+class DifficultyProperty:
+    @classmethod
+    def get(cls) -> bool:
+        file_data = PropertiesManager.get_properties_raw()
+        return str2bool(Patterns.difficulty.search(file_data).group(2), parser=False)
+
+    @classmethod
+    def set(cls, difficulty: bool):
+        current_difficulty = cls.get()
+        if difficulty == current_difficulty:
+            # TODO: log exception?
+            raise InvalidServerStateError(
+                f"difficulty is already set to {current_difficulty}"
+            )
+
+        file_data = PropertiesManager.get_properties_raw()
+        file_data = Patterns.difficulty.sub(r"\1" + bool2str(difficulty), file_data)
         PropertiesManager.write_properties_raw(file_data)
         return
 
