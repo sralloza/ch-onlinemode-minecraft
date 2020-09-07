@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 from unittest import mock
 
 from colorama import Fore
@@ -6,12 +7,22 @@ import pytest
 
 from server_manager.src.exceptions import InvalidServerStateError
 from server_manager.src.properties_manager import (
+    Patterns,
     Properties,
     get_server_mode,
     get_server_properties_filepath,
     set_server_mode,
     validate_server_path,
 )
+
+
+class TestPatterns:
+    def test_patterns(self):
+        for pattern in dir(Patterns):
+            if pattern.startswith("_"):
+                continue
+            pattern = getattr(Patterns, pattern)
+            assert isinstance(pattern, re.Pattern)
 
 
 class TestPropertiesEnum:
@@ -23,13 +34,11 @@ class TestPropertiesEnum:
         assert Properties.online_mode == Properties["online_mode"]
         assert Properties.whitelist == Properties["whitelist"]
 
-    def test_length(self):
-        assert len(Properties) == 2
-
     def test_types(self):
         for prop in Properties:
             assert isinstance(prop.name, str)
             assert isinstance(prop.value, str)
+            assert prop.name.replace("_", "-") == prop.value
 
 
 @mock.patch("server_manager.src.properties_manager.get_server_properties_filepath")
