@@ -57,13 +57,16 @@ def get_server_properties_filepath(server_path: str = None) -> Path:
 
 
 class PropertiesManager:
+    getters_map = {}
+    setters_map = {}
+
     @classmethod
     @lru_cache(maxsize=10)
-    def get_property(cls, request: Properties) -> bool:
+    def get_property(cls, request: Properties):
         return cls.getters_map[request]()
 
     @classmethod
-    def set_property(cls, **kwargs) -> bool:
+    def set_property(cls, **kwargs):
         for property_ in cls.setters_map:
             if kwargs.get(property_.name):
                 cls.setters_map[property_](kwargs.get(property_.name))
@@ -95,13 +98,44 @@ class PropertiesManager:
         server_properties_filepath.write_text(raw_properties, encoding="utf-8")
 
     @classmethod
-    def get_current_online_mode(cls) -> bool:
-        file_data = cls.get_properties_raw()
+    def register_property(cls, property_name: str):
+        property_name = property_name.replace("-", "_")
+
+        def inner(kls):
+            cls.getters_map[Properties[property_name]] = kls.get
+            cls.setters_map[Properties[property_name]] = kls.set
+            return kls
+
+        return inner
+
+
+@PropertiesManager.register_property("online-mode")
+class OnlineModeProperty:
+    @classmethod
+    def get(cls) -> bool:
+        file_data = PropertiesManager.get_properties_raw()
         return str2bool(Patterns.online_mode.search(file_data).group(2), parser=False)
 
     @classmethod
-    def get_current_whitelist_state(cls) -> bool:
-        file_data = cls.get_properties_raw()
+    def set(cls, online_mode: bool):
+        current_online_mode = cls.get()
+        if online_mode == current_online_mode:
+            # TODO: log exception?
+            raise InvalidServerStateError(
+                f"online-mode is already set to {current_online_mode}"
+            )
+
+        file_data = PropertiesManager.get_properties_raw()
+        file_data = Patterns.online_mode.sub(r"\1" + bool2str(online_mode), file_data)
+        PropertiesManager.write_properties_raw(file_data)
+        return
+
+
+@PropertiesManager.register_property("whitelist")
+class WhitelistProperty:
+    @classmethod
+    def get(cls) -> bool:
+        file_data = PropertiesManager.get_properties_raw()
         state1 = str2bool(Patterns.whitelist_1.search(file_data).group(2), parser=False)
         state2 = str2bool(Patterns.whitelist_2.search(file_data).group(2), parser=False)
 
@@ -112,34 +146,8 @@ class PropertiesManager:
         return state1
 
     @classmethod
-    def set_online_mode(cls, online_mode: bool) -> bool:
-        """Sets a new online-mode for the server itself (server.properties).
-
-        Args:
-            online_mode (bool): new online_mode to set.
-
-        Raises:
-            InvalidServerStateError: if `online_mode` is the current server mode.
-
-        Returns:
-            bool: new server online mode.
-        """
-
-        current_online_mode = cls.get_current_online_mode()
-        if online_mode == current_online_mode:
-            # TODO: log exception?
-            raise InvalidServerStateError(
-                f"online-mode is already set to {current_online_mode}"
-            )
-
-        file_data = cls.get_properties_raw()
-        file_data = Patterns.online_mode.sub(r"\1" + bool2str(online_mode), file_data)
-        cls.write_properties_raw(file_data)
-        return online_mode
-
-    @classmethod
-    def set_whitelist_state(cls, whl_state: bool) -> bool:
-        current_whitelist_state = cls.get_current_whitelist_state()
+    def set(cls, whl_state: bool):
+        current_whitelist_state = cls.get()
         if whl_state == current_whitelist_state:
             # TODO: log exception?
             # TODO: improve exception name
@@ -147,22 +155,11 @@ class PropertiesManager:
                 f"online-mode is already set to {current_whitelist_state}"
             )
 
-        file_data = cls.get_properties_raw()
+        file_data = PropertiesManager.get_properties_raw()
         file_data = Patterns.whitelist_1.sub(r"\1" + bool2str(whl_state), file_data)
         file_data = Patterns.whitelist_2.sub(r"\1" + bool2str(whl_state), file_data)
-        cls.write_properties_raw(file_data)
-        return whl_state
-
-    # After defining getters, define getters map
-    getters_map = {
-        Properties.online_mode: get_current_online_mode,
-        Properties.whitelist: get_current_whitelist_state,
-    }
-
-    setters_map = {
-        Properties.online_mode: set_online_mode,
-        Properties.whitelist: set_whitelist_state,
-    }
+        PropertiesManager.write_properties_raw(file_data)
+        return
 
 
 @lru_cache(maxsize=10)
