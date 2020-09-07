@@ -17,11 +17,13 @@ class Patterns:
     online_mode = re.compile(r"(online-mode=)(\w+)", re.IGNORECASE)
     whitelist_1 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
     whitelist_2 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
+    allow_nether = re.compile(r"(allow-nether=)(\w+)", re.IGNORECASE)
 
 
 class Properties(Enum):
     online_mode = "online-mode"
     whitelist = "whitelist"
+    allow_nether = "allow-nether"
 
 
 def validate_server_path(server_path: str):
@@ -158,6 +160,28 @@ class WhitelistProperty:
         file_data = PropertiesManager.get_properties_raw()
         file_data = Patterns.whitelist_1.sub(r"\1" + bool2str(whl_state), file_data)
         file_data = Patterns.whitelist_2.sub(r"\1" + bool2str(whl_state), file_data)
+        PropertiesManager.write_properties_raw(file_data)
+        return
+
+
+@PropertiesManager.register_property("allow-nether")
+class AllowNetherProperty:
+    @classmethod
+    def get(cls) -> bool:
+        file_data = PropertiesManager.get_properties_raw()
+        return str2bool(Patterns.allow_nether.search(file_data).group(2), parser=False)
+
+    @classmethod
+    def set(cls, nether_mode: bool):
+        current_nether = cls.get()
+        if nether_mode == current_nether:
+            # TODO: log exception?
+            raise InvalidServerStateError(
+                f"allow-nether is already set to {current_nether}"
+            )
+
+        file_data = PropertiesManager.get_properties_raw()
+        file_data = Patterns.online_mode.sub(r"\1" + bool2str(nether_mode), file_data)
         PropertiesManager.write_properties_raw(file_data)
         return
 
