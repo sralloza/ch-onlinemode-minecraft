@@ -40,34 +40,37 @@ class TestPropertiesEnum:
             assert isinstance(prop.value, str)
             assert prop.name.replace("_", "-") == prop.value
 
+class TestValidateServerPath:
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.gspf_m = mock.patch("server_manager.src.properties_manager.get_server_properties_filepath").start()
+        yield
+        mock.patch.stopall()
 
-@mock.patch("server_manager.src.properties_manager.get_server_properties_filepath")
-def test_validate_server_path_ok(gspf_m):
-    gspf_m.return_value.is_file.return_value = True
+    def test_ok(self):
+        self.gspf_m.return_value.is_file.return_value = True
 
-    validate_server_path("<server-path>")
-
-    gspf_m.assert_called_once_with("<server-path>")
-    gspf_m.return_value.is_file.assert_called_once_with()
-
-
-@mock.patch("server_manager.src.properties_manager.get_server_properties_filepath")
-def test_validate_server_path_fail(gspf_m, capsys):
-    gspf_m.return_value.is_file.return_value = False
-    gspf_m.return_value.as_posix.return_value = "<properties-path>"
-
-    with pytest.raises(SystemExit, match="-1"):
         validate_server_path("<server-path>")
 
-    gspf_m.assert_called_once_with("<server-path>")
-    gspf_m.return_value.is_file.assert_called_once_with()
-    gspf_m.return_value.as_posix.assert_called_once_with()
+        self.gspf_m.assert_called_once_with("<server-path>")
+        self.gspf_m.return_value.is_file.assert_called_once_with()
 
-    captured = capsys.readouterr()
-    assert Fore.LIGHTRED_EX in captured.err
-    assert Fore.RESET in captured.err
-    assert "server.properties not found: '<properties-path>'" in captured.err
-    assert captured.out == ""
+    def test_fail(self, capsys):
+        self.gspf_m.return_value.is_file.return_value = False
+        self.gspf_m.return_value.as_posix.return_value = "<properties-path>"
+
+        with pytest.raises(SystemExit, match="-1"):
+            validate_server_path("<server-path>")
+
+        self.gspf_m.assert_called_once_with("<server-path>")
+        self.gspf_m.return_value.is_file.assert_called_once_with()
+        self.gspf_m.return_value.as_posix.assert_called_once_with()
+
+        captured = capsys.readouterr()
+        assert Fore.LIGHTRED_EX in captured.err
+        assert Fore.RESET in captured.err
+        assert "server.properties not found: '<properties-path>'" in captured.err
+        assert captured.out == ""
 
 
 @mock.patch("server_manager.src.properties_manager.get_server_path")
