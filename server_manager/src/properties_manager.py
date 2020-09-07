@@ -106,11 +106,9 @@ class PropertiesManager:
 
     @classmethod
     def register_property(cls, property_name: str):
-        property_name = property_name.replace("-", "_")
-
         def inner(kls):
-            cls.getters_map[Properties[property_name]] = kls.get
-            cls.setters_map[Properties[property_name]] = kls.set
+            cls.getters_map[Properties(property_name)] = kls.get
+            cls.setters_map[Properties(property_name)] = kls.set
             return kls
 
         return inner
