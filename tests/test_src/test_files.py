@@ -301,18 +301,16 @@ class TestFile:
 
     @mock.patch("os.walk")
     def test_gen_files(self, walk_m):
-        zeros = "00000000-0000-0000-0000-0000000000"
+        def exp(string):
+            return "00000000-0000-0000-0000-0000000000" + string
+
         walk = (
             ("./", ["typea", "typeb", "typec", "hidden"], []),
-            (
-                "./typea",
-                [],
-                [zeros + "a1.json", zeros + "a2.json", zeros + "a3.json",],
-            ),
-            ("./typeb", [], [zeros + "b1.json", zeros + "b2.json",],),
-            ("./hidden", ["typec", "invalid-type", zeros + "c0.dat_old"], []),
+            ("./typea", [], [exp("a1.json"), exp("a2.json"), exp("a3.json")]),
+            ("./typeb", [], [exp("b1.json"), exp("b2.json")]),
+            ("./hidden", ["typec", "invalid-type", exp("c0.dat_old")], []),
             ("./hidden/invalid-type", [], ["a.pdf", "b.pdf", "c.pdf"]),
-            ("./hidden/typec", [], [zeros + "c1.json"]),
+            ("./hidden/typec", [], [exp("c1.json")]),
         )
 
         walk_m.return_value = walk
