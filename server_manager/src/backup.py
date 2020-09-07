@@ -93,7 +93,7 @@ def run_sfk():
             exc.stdout,
             exc.stderr,
         )
-        raise SFKError("Error running SFK")
+        raise SFKError("Error running SFK") from exc
 
     logger.info("Backup created")
 
