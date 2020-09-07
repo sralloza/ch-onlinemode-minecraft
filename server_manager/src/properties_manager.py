@@ -99,6 +99,9 @@ class PropertiesManager:
         server_properties_filepath = get_server_properties_filepath()
         server_properties_filepath.write_text(raw_properties, encoding="utf-8")
 
+        # Reset cache
+        cls.get_properties_raw.cache_clear()
+
     @classmethod
     def register_property(cls, property_name: str):
         property_name = property_name.replace("-", "_")
@@ -181,7 +184,7 @@ class AllowNetherProperty:
             )
 
         file_data = PropertiesManager.get_properties_raw()
-        file_data = Patterns.online_mode.sub(r"\1" + bool2str(nether_mode), file_data)
+        file_data = Patterns.allow_nether.sub(r"\1" + bool2str(nether_mode), file_data)
         PropertiesManager.write_properties_raw(file_data)
         return
 
@@ -197,16 +200,7 @@ def get_server_mode() -> bool:
     return PropertiesManager.get_property(Properties.online_mode)
 
 
-def set_server_mode(online_mode: bool) -> bool:
-    """Sets the server mode to `online_mode`.
-
-    Args:
-        online_mode (bool): new online mode to set.
-
-    Returns:
-        bool: current online mode after change.
-    """
-
+def set_server_mode(online_mode: bool):
     return PropertiesManager.set_property(online_mode=online_mode)
 
 
