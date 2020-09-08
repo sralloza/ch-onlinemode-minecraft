@@ -18,9 +18,13 @@ PropertiesLike = Union["Properties", str]
 
 class Properties(Enum):
     allow_nether = "allow-nether"
+    broadcast_rcon_to_ops = "broadcast-rcon-to-ops"
     difficulty = "difficulty"
+    enable_rcon = "enable-rcon"
     max_players = "max-players"
     online_mode = "online-mode"
+    rcon_password = "rcon.password"
+    rcon_port = "rcon.port"
     whitelist = "whitelist"
 
 
@@ -153,6 +157,14 @@ class BaseProperty(metaclass=MetaProperty):
             )
 
 
+class AllowNetherProperty(BaseProperty):
+    property_name = "allow-nether"
+
+
+class BroadcastRconToOps(BaseProperty):
+    property_name = "broadcast-rcon-to-ops"
+
+
 class DifficultyProperty(BaseProperty):
     property_name = "difficulty"
 
@@ -179,6 +191,18 @@ class MaxPlayersProperty(BaseProperty):
 
 class OnlineModeProperty(BaseProperty):
     property_name = "online-mode"
+
+
+class RconPassword(BaseProperty):
+    property_name = "rcon.password"
+    value_to_str = str
+    str_to_value = str
+
+
+class RconPort(BaseProperty):
+    property_name = "rcon.port"
+    value_to_str = str
+    str_to_value = int
 
 
 class WhitelistProperty(BaseProperty):
