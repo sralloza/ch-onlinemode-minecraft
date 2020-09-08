@@ -15,11 +15,11 @@ from .utils import bool2str, str2bool
 
 
 class Properties(Enum):
-    online_mode = "online-mode"
-    whitelist = "whitelist"
     allow_nether = "allow-nether"
     difficulty = "difficulty"
     max_players = "max-players"
+    online_mode = "online-mode"
+    whitelist = "whitelist"
 
 
 def validate_server_path(server_path: str):
@@ -105,7 +105,6 @@ class PropertiesManager:
         cls.setters_map[Properties(property_name)] = property_class.set
 
 
-
 class MetaProperty(type):
     def __new__(mcs, name, bases, attrs, **kwargs):
         if "property_name" not in attrs and "Base" not in name:
@@ -151,6 +150,30 @@ class BaseProperty(metaclass=MetaProperty):
             )
 
 
+class DifficultyProperty(BaseProperty):
+    property_name = "difficulty"
+
+    @classmethod
+    def value_to_str(cls, difficulty: str) -> str:
+        return difficulty
+
+    @classmethod
+    def str_to_value(cls, string: str) -> str:
+        if string not in ["peaceful", "easy", "normal", "hard"]:
+            raise ValueError(f"Invalid difficulty: {string!r}")
+        return string
+
+
+class EnableRconProperty(BaseProperty):
+    property_name = "enable-rcon"
+
+
+class MaxPlayersProperty(BaseProperty):
+    property_name = "max-players"
+    value_to_str = str
+    str_to_value = int
+
+
 class OnlineModeProperty(BaseProperty):
     property_name = "online-mode"
 
@@ -180,30 +203,6 @@ class WhitelistProperty(BaseProperty):
         file_data = cls.pattern_1.sub(r"\1" + bool2str(whl_state), file_data)
         file_data = cls.pattern_2.sub(r"\1" + bool2str(whl_state), file_data)
         PropertiesManager.write_properties_raw(file_data)
-
-
-class AllowNetherProperty(BaseProperty):
-    property_name = "allow-nether"
-
-
-class DifficultyProperty(BaseProperty):
-    property_name = "difficulty"
-
-    @classmethod
-    def value_to_str(cls, difficulty: str) -> str:
-        return difficulty
-
-    @classmethod
-    def str_to_value(cls, string: str) -> str:
-        if string not in ["peaceful", "easy", "normal", "hard"]:
-            raise ValueError(f"Invalid difficulty: {string!r}")
-        return string
-
-
-class MaxPlayersProperty(BaseProperty):
-    property_name = "max-players"
-    value_to_str = str
-    str_to_value = int
 
 
 @lru_cache(maxsize=10)
