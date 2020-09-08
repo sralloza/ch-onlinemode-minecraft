@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from colorama import Fore
 from server_manager.src.properties_manager import (
+    MetaProperty,
     Properties,
     PropertiesManager,
     get_server_mode,
@@ -118,7 +119,7 @@ class TestPropertiesManager:
             NewProperties.mock_a: lambda: 10,
             NewProperties.mock_b: lambda: 11,
             NewProperties.mock_c: lambda: 12,
-            NewProperties.dummy: None
+            NewProperties.dummy: None,
         }
         mock.patch(root + "PropertiesManager.getters_map", self.getters).start()
 
@@ -195,3 +196,65 @@ class TestPropertiesManager:
 
         assert PropertiesManager.getters_map[prop] == DummyProperty.get
         assert PropertiesManager.setters_map[prop] == DummyProperty.set
+
+
+class TestMetaProperty:
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        root = "server_manager.src.properties_manager."
+        self.reg_prop_m = mock.patch(
+            root + "PropertiesManager.register_property"
+        ).start()
+
+    def test_ok(self):
+        class BaseSomething1(metaclass=MetaProperty):
+            pass
+
+        assert BaseSomething1.__name__ == "BaseSomething1"
+
+        self.reg_prop_m.assert_not_called()
+
+        class BaseSomething2(BaseSomething1):
+            pass
+
+        assert BaseSomething2.__name__ == "BaseSomething2"
+
+        self.reg_prop_m.assert_not_called()
+
+        class NormalClass(metaclass=MetaProperty):
+            property_name = "normal-class"
+
+        assert NormalClass.__name__ == "NormalClass"
+
+        self.reg_prop_m.assert_called_once_with(NormalClass, "normal-class")
+
+        class NormalClass2(NormalClass):
+            property_name = "normal-class-2"
+
+        assert NormalClass2.__name__ == "NormalClass2"
+
+        self.reg_prop_m.assert_called()
+        assert self.reg_prop_m.call_count == 2
+        self.reg_prop_m.any_call(NormalClass2, "normal-class-2")
+
+    def test_fail(self):
+        with pytest.raises(ValueError, match="Must set property name"):
+
+            class FailedClass(metaclass=MetaProperty):
+                pass
+
+        class GoodBase1(metaclass=MetaProperty):
+            property_name = None
+
+        with pytest.raises(ValueError, match="Must set property name"):
+
+            class FailedClass1(GoodBase1):
+                pass
+
+        class GoodBase2(metaclass=MetaProperty):
+            pass
+
+        with pytest.raises(ValueError, match="Must set property name"):
+
+            class FailedClass2(GoodBase2):
+                pass
