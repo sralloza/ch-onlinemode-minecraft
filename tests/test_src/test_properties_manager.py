@@ -1,28 +1,17 @@
+from enum import Enum
 from pathlib import Path
-import re
 from unittest import mock
 
-from colorama import Fore
 import pytest
-
-from server_manager.src.exceptions import InvalidServerStateError
+from colorama import Fore
 from server_manager.src.properties_manager import (
-    Patterns,
     Properties,
+    PropertiesManager,
     get_server_mode,
     get_server_properties_filepath,
     set_server_mode,
     validate_server_path,
 )
-
-
-class TestPatterns:
-    def test_patterns(self):
-        for pattern in dir(Patterns):
-            if pattern.startswith("_"):
-                continue
-            pattern = getattr(Patterns, pattern)
-            assert isinstance(pattern, re.Pattern)
 
 
 class TestPropertiesEnum:
@@ -40,10 +29,13 @@ class TestPropertiesEnum:
             assert isinstance(prop.value, str)
             assert prop.name.replace("_", "-") == prop.value
 
+
 class TestValidateServerPath:
     @pytest.fixture(autouse=True)
     def mocks(self):
-        self.gspf_m = mock.patch("server_manager.src.properties_manager.get_server_properties_filepath").start()
+        self.gspf_m = mock.patch(
+            "server_manager.src.properties_manager.get_server_properties_filepath"
+        ).start()
         yield
         mock.patch.stopall()
 
@@ -103,64 +95,103 @@ class TestPropertiesManager:
     def mocks(self):
         root = "server_manager.src.properties_manager."
         self.gspf_m = mock.patch(root + "get_server_properties_filepath").start()
-        self.str2bool_m = mock.patch(root + "str2bool").start()
-        self.bool2str_m = mock.patch(root + "bool2str").start()
         self.prop_path = Path(__file__).parent.parent.joinpath(
             "test_data/server.properties"
         )
         self.text = self.prop_path.read_text()
         self.gspf_m.return_value.read_text.return_value = self.text
-        self.onlines = {True: "true", False: "false"}
+
+        self.mock_a = mock.MagicMock()
+        self.mock_b = mock.MagicMock()
+        self.mock_c = mock.MagicMock()
+
+        class NewProperties(Enum):
+            mock_a = "mock-a"
+            mock_b = "mock-b"
+            mock_c = "mock-c"
+            dummy = "dummy"
+
+        self.NewProperties = NewProperties
+        mock.patch(root + "Properties", NewProperties).start()
+
+        self.getters = {
+            NewProperties.mock_a: lambda: 10,
+            NewProperties.mock_b: lambda: 11,
+            NewProperties.mock_c: lambda: 12,
+            NewProperties.dummy: None
+        }
+        mock.patch(root + "PropertiesManager.getters_map", self.getters).start()
+
+        self.setters = {
+            NewProperties.mock_a: self.mock_a,
+            NewProperties.mock_b: self.mock_b,
+            NewProperties.mock_c: self.mock_c,
+            NewProperties.dummy: None,
+        }
+        mock.patch(root + "PropertiesManager.setters_map", self.setters).start()
 
         yield
 
-        self.gspf_m.return_value.read_text.assert_called_once_with(encoding="utf-8")
         mock.patch.stopall()
 
-    def test_get_current_mode(self):
-        result = properties_manager(online_mode=None)
-        assert result == self.str2bool_m.return_value
-        self.gspf_m.assert_called_once_with()
-        self.str2bool_m.assert_called_once_with("onlinemode", parser=False)
+    def test_get_property(self):
+        assert PropertiesManager.get_property("mock-a") == 10
+        assert PropertiesManager.get_property("mock-b") == 11
+        assert PropertiesManager.get_property("mock-c") == 12
 
-    @pytest.mark.parametrize("online", [True, False])
-    def test_current_mode_fail(self, online):
-        self.str2bool_m.return_value = online
-        with pytest.raises(InvalidServerStateError):
-            properties_manager(online_mode=online)
+    def test_set_property(self):
+        self.mock_a.assert_not_called()
+        self.mock_b.assert_not_called()
+        self.mock_c.assert_not_called()
 
-        self.str2bool_m.assert_called_once_with("onlinemode", parser=False)
+        PropertiesManager.set_property(mock_a="a")
 
-    @pytest.mark.parametrize("online", [True, False])
-    def test_current_mode_ok(self, online):
-        self.str2bool_m.return_value = not online
-        self.bool2str_m.side_effect = self.onlines.get
+        self.mock_a.assert_called_once_with("a")
+        self.mock_b.assert_not_called()
+        self.mock_c.assert_not_called()
 
-        result = properties_manager(online_mode=online)
-        assert result == online  # returns the new online mode
+        PropertiesManager.set_property(mock_b=52)
+        self.mock_a.assert_called_once_with("a")
+        self.mock_b.assert_called_once_with(52)
+        self.mock_c.assert_not_called()
 
-        self.str2bool_m.assert_any_call("onlinemode", parser=False)
-        new_text = self.text.replace("onlinemode", self.onlines[online])
+        PropertiesManager.set_property(mock_c=-9)
+        self.mock_a.assert_called_once_with("a")
+        self.mock_b.assert_called_once_with(52)
+        self.mock_c.assert_called_once_with(-9)
+
+    def test_get_properties_raw(self):
+        properties_raw = PropertiesManager.get_properties_raw()
+        assert properties_raw == self.text
+        self.gspf_m.return_value.read_text.assert_called_once_with(encoding="utf-8")
+
+        # LRU cache
+        properties_raw = PropertiesManager.get_properties_raw()
+        assert properties_raw == self.text
+        self.gspf_m.return_value.read_text.assert_called_once_with(encoding="utf-8")
+
+    def test_write_properties_raw(self):
+        PropertiesManager.write_properties_raw("<server.properties>")
         self.gspf_m.return_value.write_text.assert_called_once_with(
-            new_text, encoding="utf-8"
+            "<server.properties>", encoding="utf-8"
         )
 
+    def test_register_property(self):
+        class DummyProperty:
+            @classmethod
+            def set(cls, *args):
+                return
 
-@pytest.mark.parametrize("online", [True, False])
-@mock.patch("server_manager.src.properties_manager.properties_manager")
-def test_set_server_mode(pm_m, online):
-    result = set_server_mode(online_mode=online)
-    pm_m.assert_called_once_with(online_mode=online)
-    assert result == pm_m.return_value
+            @classmethod
+            def get(cls,):
+                return
 
+        prop = self.NewProperties.dummy
 
-@mock.patch("server_manager.src.properties_manager.properties_manager")
-def test_get_server_mode(pm_m):
-    result = get_server_mode()
-    pm_m.assert_called_once_with(online_mode=None)
-    assert result == pm_m.return_value
+        assert PropertiesManager.getters_map[prop] is None
+        assert PropertiesManager.setters_map[prop] is None
 
-    # Test the lru_cache
-    result = get_server_mode()
-    pm_m.assert_called_once_with(online_mode=None)  # only called once
-    assert result == pm_m.return_value
+        PropertiesManager.register_property(DummyProperty, "dummy")
+
+        assert PropertiesManager.getters_map[prop] == DummyProperty.get
+        assert PropertiesManager.setters_map[prop] == DummyProperty.set

@@ -1,11 +1,10 @@
 """Manages the properties of the minecraft server (`server.properties`)."""
 
-import re
-import sys
-from abc import abstractclassmethod, abstractstaticmethod
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
+import re
+import sys
 from typing import Union
 
 from colorama import Fore
