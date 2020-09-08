@@ -19,6 +19,7 @@ class Patterns:
     whitelist_2 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
     allow_nether = re.compile(r"(allow-nether=)(\w+)", re.IGNORECASE)
     difficulty = re.compile(r"(difficulty=)(\w+)", re.IGNORECASE)
+    max_players = re.compile(r"(max-players=)(\w+)", re.IGNORECASE)
 
 
 class Properties(Enum):
@@ -26,6 +27,7 @@ class Properties(Enum):
     whitelist = "whitelist"
     allow_nether = "allow-nether"
     difficulty = "difficulty"
+    max_players = "max-players"
 
 
 def validate_server_path(server_path: str):
@@ -207,6 +209,28 @@ class DifficultyProperty:
 
         file_data = PropertiesManager.get_properties_raw()
         file_data = Patterns.difficulty.sub(r"\1" + bool2str(difficulty), file_data)
+        PropertiesManager.write_properties_raw(file_data)
+        return
+
+
+@PropertiesManager.register_property("max-players")
+class MaxPlayersProperty:
+    @classmethod
+    def get(cls) -> bool:
+        file_data = PropertiesManager.get_properties_raw()
+        return str2bool(Patterns.max_players.search(file_data).group(2), parser=False)
+
+    @classmethod
+    def set(cls, max_players: bool):
+        current_max_players = cls.get()
+        if max_players == current_max_players:
+            # TODO: log exception?
+            raise InvalidServerStateError(
+                f"max-players is already set to {current_max_players}"
+            )
+
+        file_data = PropertiesManager.get_properties_raw()
+        file_data = Patterns.max_players.sub(r"\1" + bool2str(max_players), file_data)
         PropertiesManager.write_properties_raw(file_data)
         return
 
