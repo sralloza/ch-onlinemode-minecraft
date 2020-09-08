@@ -105,6 +105,7 @@ class PropertiesManager:
 
         # Reset cache
         cls.get_properties_raw.cache_clear()
+        cls.get_property.cache_clear()
 
     @classmethod
     def register_property(cls, property_name: str):
