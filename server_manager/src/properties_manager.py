@@ -114,10 +114,10 @@ class PropertiesManager:
 
 class MetaProperty(type):
     def __new__(mcs, name, bases, attrs, **kwargs):
-        if "property_name" not in attrs and "Base" not in name:
+        property_name = attrs.get("property_name")
+        if not property_name and "Base" not in name:
             raise ValueError("Must set property name")
 
-        property_name = attrs.get("property_name")
         cls = super().__new__(mcs, name, bases, attrs)
         if "Base" not in name:
             PropertiesManager.register_property(cls, property_name)
