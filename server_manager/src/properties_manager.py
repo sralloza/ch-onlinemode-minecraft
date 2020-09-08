@@ -74,7 +74,7 @@ class PropertiesManager:
     @classmethod
     def set_property(cls, **kwargs):
         for property_ in cls.setters_map:
-            if kwargs.get(property_.name):
+            if kwargs.get(property_.name) is not None:
                 cls.setters_map[property_](kwargs.get(property_.name))
                 break
         else:
