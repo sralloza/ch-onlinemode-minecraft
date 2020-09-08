@@ -6,12 +6,15 @@ from abc import abstractclassmethod, abstractstaticmethod
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
+from typing import Union
 
 from colorama import Fore
 
 from .exceptions import InvalidServerStateError
 from .paths import get_server_path
 from .utils import bool2str, str2bool
+
+PropertiesLike = Union["Properties", str]
 
 
 class Properties(Enum):
@@ -60,7 +63,8 @@ class PropertiesManager:
 
     @classmethod
     @lru_cache(maxsize=10)
-    def get_property(cls, request: Properties):
+    def get_property(cls, request: PropertiesLike):
+        request = Properties(request)
         return cls.getters_map[request]()
 
     @classmethod
