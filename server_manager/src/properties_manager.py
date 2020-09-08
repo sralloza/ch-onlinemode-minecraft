@@ -1,25 +1,17 @@
 """Manages the properties of the minecraft server (`server.properties`)."""
 
+import re
+import sys
+from abc import abstractclassmethod, abstractstaticmethod
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-import re
-import sys
 
 from colorama import Fore
 
 from .exceptions import InvalidServerStateError
 from .paths import get_server_path
 from .utils import bool2str, str2bool
-
-
-class Patterns:
-    online_mode = re.compile(r"(online-mode=)(\w+)", re.IGNORECASE)
-    whitelist_1 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
-    whitelist_2 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
-    allow_nether = re.compile(r"(allow-nether=)(\w+)", re.IGNORECASE)
-    difficulty = re.compile(r"(difficulty=)(\w+)", re.IGNORECASE)
-    max_players = re.compile(r"(max-players=)(\w+)", re.IGNORECASE)
 
 
 class Properties(Enum):
@@ -108,44 +100,71 @@ class PropertiesManager:
         cls.get_property.cache_clear()
 
     @classmethod
-    def register_property(cls, property_name: str):
-        def inner(kls):
-            cls.getters_map[Properties(property_name)] = kls.get
-            cls.setters_map[Properties(property_name)] = kls.set
-            return kls
-
-        return inner
+    def register_property(cls, property_class, property_name):
+        cls.getters_map[Properties(property_name)] = property_class.get
+        cls.setters_map[Properties(property_name)] = property_class.set
 
 
-@PropertiesManager.register_property("online-mode")
-class OnlineModeProperty:
+
+class MetaProperty(type):
+    def __new__(mcs, name, bases, attrs, **kwargs):
+        if "property_name" not in attrs and "Base" not in name:
+            raise ValueError("Must set property name")
+
+        property_name = attrs.get("property_name")
+        cls = super().__new__(mcs, name, bases, attrs)
+        if "Base" not in name:
+            PropertiesManager.register_property(cls, property_name)
+
+        return cls
+
+
+class BaseProperty(metaclass=MetaProperty):
+    property_name = None
+    str_to_value = lambda x: str2bool(x, parser=False)
+    value_to_str = bool2str
+
     @classmethod
-    def get(cls) -> bool:
+    def get_pattern(cls):
+        return re.compile(rf"({cls.property_name}=)(\w+)", re.IGNORECASE)
+
+    @classmethod
+    def get(cls):
         file_data = PropertiesManager.get_properties_raw()
-        return str2bool(Patterns.online_mode.search(file_data).group(2), parser=False)
+        return cls.str_to_value(cls.get_pattern().search(file_data).group(2))
 
     @classmethod
-    def set(cls, online_mode: bool):
-        current_online_mode = cls.get()
-        if online_mode == current_online_mode:
+    def set(cls, property_value):
+        cls.check_same_property(property_value)
+        file_data = PropertiesManager.get_properties_raw()
+        sub = r"\g<1>" + cls.value_to_str(property_value)
+        file_data = cls.get_pattern().sub(sub, file_data)
+        PropertiesManager.write_properties_raw(file_data)
+
+    @classmethod
+    def check_same_property(cls, new_property):
+        current_property = cls.get()
+        if new_property == current_property:
             # TODO: log exception?
             raise InvalidServerStateError(
-                f"online-mode is already set to {current_online_mode}"
+                f"{cls.property_name} is already set to {current_property}"
             )
 
-        file_data = PropertiesManager.get_properties_raw()
-        file_data = Patterns.online_mode.sub(r"\1" + bool2str(online_mode), file_data)
-        PropertiesManager.write_properties_raw(file_data)
-        return
+
+class OnlineModeProperty(BaseProperty):
+    property_name = "online-mode"
 
 
-@PropertiesManager.register_property("whitelist")
-class WhitelistProperty:
+class WhitelistProperty(BaseProperty):
+    property_name = "whitelist"
+    pattern_1 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
+    pattern_2 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
+
     @classmethod
     def get(cls) -> bool:
         file_data = PropertiesManager.get_properties_raw()
-        state1 = str2bool(Patterns.whitelist_1.search(file_data).group(2), parser=False)
-        state2 = str2bool(Patterns.whitelist_2.search(file_data).group(2), parser=False)
+        state1 = str2bool(cls.pattern_1.search(file_data).group(2), parser=False)
+        state2 = str2bool(cls.pattern_2.search(file_data).group(2), parser=False)
 
         if state1 != state2:
             # TODO: improve exception name and log exception
@@ -155,85 +174,36 @@ class WhitelistProperty:
 
     @classmethod
     def set(cls, whl_state: bool):
-        current_whitelist_state = cls.get()
-        if whl_state == current_whitelist_state:
-            # TODO: log exception?
-            # TODO: improve exception name
-            raise InvalidServerStateError(
-                f"online-mode is already set to {current_whitelist_state}"
-            )
+        cls.check_same_property(whl_state)
 
         file_data = PropertiesManager.get_properties_raw()
-        file_data = Patterns.whitelist_1.sub(r"\1" + bool2str(whl_state), file_data)
-        file_data = Patterns.whitelist_2.sub(r"\1" + bool2str(whl_state), file_data)
+        file_data = cls.pattern_1.sub(r"\1" + bool2str(whl_state), file_data)
+        file_data = cls.pattern_2.sub(r"\1" + bool2str(whl_state), file_data)
         PropertiesManager.write_properties_raw(file_data)
-        return
 
 
-@PropertiesManager.register_property("allow-nether")
-class AllowNetherProperty:
-    @classmethod
-    def get(cls) -> bool:
-        file_data = PropertiesManager.get_properties_raw()
-        return str2bool(Patterns.allow_nether.search(file_data).group(2), parser=False)
-
-    @classmethod
-    def set(cls, nether_mode: bool):
-        current_nether = cls.get()
-        if nether_mode == current_nether:
-            # TODO: log exception?
-            raise InvalidServerStateError(
-                f"allow-nether is already set to {current_nether}"
-            )
-
-        file_data = PropertiesManager.get_properties_raw()
-        file_data = Patterns.allow_nether.sub(r"\1" + bool2str(nether_mode), file_data)
-        PropertiesManager.write_properties_raw(file_data)
-        return
+class AllowNetherProperty(BaseProperty):
+    property_name = "allow-nether"
 
 
-@PropertiesManager.register_property("difficulty")
-class DifficultyProperty:
-    @classmethod
-    def get(cls) -> bool:
-        file_data = PropertiesManager.get_properties_raw()
-        return str2bool(Patterns.difficulty.search(file_data).group(2), parser=False)
+class DifficultyProperty(BaseProperty):
+    property_name = "difficulty"
 
     @classmethod
-    def set(cls, difficulty: bool):
-        current_difficulty = cls.get()
-        if difficulty == current_difficulty:
-            # TODO: log exception?
-            raise InvalidServerStateError(
-                f"difficulty is already set to {current_difficulty}"
-            )
-
-        file_data = PropertiesManager.get_properties_raw()
-        file_data = Patterns.difficulty.sub(r"\1" + bool2str(difficulty), file_data)
-        PropertiesManager.write_properties_raw(file_data)
-        return
-
-
-@PropertiesManager.register_property("max-players")
-class MaxPlayersProperty:
-    @classmethod
-    def get(cls) -> bool:
-        file_data = PropertiesManager.get_properties_raw()
-        return str2bool(Patterns.max_players.search(file_data).group(2), parser=False)
+    def value_to_str(cls, difficulty: str) -> str:
+        return difficulty
 
     @classmethod
-    def set(cls, max_players: bool):
-        current_max_players = cls.get()
-        if max_players == current_max_players:
-            # TODO: log exception?
-            raise InvalidServerStateError(
-                f"max-players is already set to {current_max_players}"
-            )
+    def str_to_value(cls, string: str) -> str:
+        if string not in ["peaceful", "easy", "normal", "hard"]:
+            raise ValueError(f"Invalid difficulty: {string!r}")
+        return string
 
-        file_data = PropertiesManager.get_properties_raw()
-        file_data = Patterns.max_players.sub(r"\1" + bool2str(max_players), file_data)
-        PropertiesManager.write_properties_raw(file_data)
-        return
+
+class MaxPlayersProperty(BaseProperty):
+    property_name = "max-players"
+    value_to_str = str
+    str_to_value = int
 
 
 @lru_cache(maxsize=10)
