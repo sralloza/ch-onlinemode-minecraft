@@ -20,7 +20,7 @@ from .src.whitelist import update_whitelist
 
 
 def setup_logging():
-    """Configure logging."""
+    """Configures logging."""
 
     fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
     filename = get_backups_folder().joinpath("lia-manager.log")
@@ -51,18 +51,18 @@ def main():
 
 @main.command("backup")
 def backup():
-    """Makes a backup of the minecraft server folder."""
+    """Makes a backup of the minecraft server folder"""
     create_backup()
 
 
 @main.group("online-mode")
 def online_mode():
-    """Manages server's online mode."""
+    """Manages server's online mode"""
 
 
 @online_mode.command("get")
 def get_online_mode():
-    """Prints the current server online-mode."""
+    """Prints the current server online-mode"""
 
     current_servermode = PropertiesManager.get_property("online_mode")
     print(f"server is currently running as {current_servermode}")
@@ -71,11 +71,7 @@ def get_online_mode():
 @online_mode.command("set")
 @click.argument("online-mode", type=bool)
 def set_online_mode(online_mode: bool):
-    """Sets the server online-mode.
-
-    Args:
-        online_mode (bool): new server online-mode
-    """
+    """Sets the server online-mode"""
 
     try:
         set_mode(new_mode=online_mode)
@@ -91,7 +87,7 @@ def players():
 
 @players.command("list-csv")
 def print_players_data():
-    """Prints the players data from parsing the csv."""
+    """Prints the players data from parsing the csv"""
     players = get_players_data()
     if not players:
         print("<no players found in the csv>")
@@ -103,7 +99,7 @@ def print_players_data():
 
 @players.command("list-server")
 def list_players():
-    """Prints all the server's players information."""
+    """Prints all the server's players information"""
 
     players = Player.generate()
     if not players:
@@ -131,7 +127,7 @@ def list_players():
 @click.option("--force", is_flag=True)
 def reset_players(force: bool) -> bool:
     """Removes all the players' data if each player has the ender chest
-    and the inventory emtpy."""
+    and the inventory emtpy"""
 
     players = Player.generate()
     return remove_players_safely(players, force=force)
@@ -157,12 +153,12 @@ def show_player(player_name: str):
 
 @main.group("debug")
 def debug():
-    """Debug tools."""
+    """Debug tools"""
 
 
 @debug.command("files")
 def print_files():
-    """Prints all the files containing players data."""
+    """Prints all the files containing players data"""
 
     File.gen_files(get_server_path())
     for key in File.memory:
@@ -172,7 +168,7 @@ def print_files():
 
 @main.command("update-whitelist")
 def cli_update_whitelist():
-    """Writes an updated whitelist to the whitelist file (`whitelist.json`)."""
+    """Updates the whitelist using data from the csv"""
 
     # TODO: test this call and update docstrign
     # ensure_whitelist_on()
