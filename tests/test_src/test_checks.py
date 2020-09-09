@@ -67,7 +67,7 @@ class TestPlayerChecks:
     @pytest.fixture(autouse=True)
     def mocks(self, caplog):
         root = "server_manager.src.checks."
-        self.gsm_m = mock.patch(root + "get_server_mode").start()
+        self.get_prop_m = mock.patch(root + "PropertiesManager.get_property").start()
         self.rps_m = mock.patch(root + "remove_players_safely").start()
         self.gp_m = mock.patch(root + "group_players").start()
         self.ply = namedtuple("Player", "id online")
@@ -83,7 +83,7 @@ class TestPlayerChecks:
         if fail:
             players += extra
 
-        self.gsm_m.return_value = True
+        self.get_prop_m.return_value = True
 
         result = PlayerChecks.check_online_mode(players)
 
@@ -131,7 +131,9 @@ class TestPlayerChecks:
 class TestCheckPlugin:
     @pytest.fixture(autouse=True)
     def mocks(self):
-        self.gsm_m = mock.patch("server_manager.src.checks.get_server_mode").start()
+        self.gp_m = mock.patch(
+            "server_manager.src.checks.PropertiesManager.get_property"
+        ).start()
         self.gpm_m = mock.patch("server_manager.src.checks.get_plugin_mode").start()
         yield
         mock.patch.stopall()
@@ -139,13 +141,13 @@ class TestCheckPlugin:
     @pytest.mark.parametrize("server_mode", [True, False])
     def test_ok(self, server_mode, caplog):
         caplog.set_level(10)
-        self.gsm_m.return_value = server_mode
+        self.gp_m.return_value = server_mode
         self.gpm_m.return_value = not server_mode
 
         result = check_plugin()
         assert result is True
 
-        self.gsm_m.assert_called_once_with()
+        self.gp_m.assert_called_once_with("online_mode")
         self.gpm_m.assert_called_once_with()
 
         assert len(caplog.records) == 0
@@ -153,7 +155,7 @@ class TestCheckPlugin:
     @pytest.mark.parametrize("server_mode", [True, False])
     def test_fail(self, server_mode, caplog):
         caplog.set_level(10)
-        self.gsm_m.return_value = server_mode
+        self.gp_m.return_value = server_mode
         self.gpm_m.return_value = server_mode
 
         msg = "Plugin check failed [server-mode=%s, plugin-mode=%s]"
@@ -162,7 +164,7 @@ class TestCheckPlugin:
             check_plugin()
         assert exc.value.args[0] == msg
 
-        self.gsm_m.assert_called_once_with()
+        self.gp_m.assert_called_once_with("online_mode")
         self.gpm_m.assert_called_once_with()
 
         assert len(caplog.records) == 1

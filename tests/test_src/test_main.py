@@ -245,7 +245,9 @@ class TestCommand:
     @pytest.fixture(autouse=True)
     def mocks(self):
         self.backup_m = mock.patch("server_manager.main.create_backup").start()
-        self.gsv_m = mock.patch("server_manager.main.get_server_mode").start()
+        self.gp_m = mock.patch(
+            "server_manager.main.PropertiesManager.get_property"
+        ).start()
         self.set_mode_m = mock.patch("server_manager.main.set_mode").start()
         self.gpd_m = mock.patch("server_manager.main.get_players_data").start()
         self.player_gen_m = mock.patch("server_manager.main.Player.generate").start()
@@ -265,7 +267,7 @@ class TestCommand:
         Commands.backup()
 
         self.backup_m.assert_called_once_with()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
@@ -281,12 +283,12 @@ class TestCommand:
         assert result.err == ""
 
     def test_get_online_mode(self, capsys):
-        self.gsv_m.return_value = "<server-mode>"
+        self.gp_m.return_value = "<server-mode>"
 
         Commands.get_online_mode()
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_called_once_with()
+        self.gp_m.assert_called_once_with("online_mode")
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
@@ -305,7 +307,7 @@ class TestCommand:
         Commands.set_online_mode("<om>")
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_called_once_with(new_mode="<om>")
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
@@ -326,7 +328,7 @@ class TestCommand:
         Commands.print_players_data()
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_called_once_with()
         self.player_gen_m.assert_not_called()
@@ -363,7 +365,7 @@ class TestCommand:
         Commands.list_players()
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_called_once_with()
@@ -392,7 +394,7 @@ class TestCommand:
         Commands.print_files()
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
@@ -411,7 +413,7 @@ class TestCommand:
         Commands.update_whitelist()
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_not_called()
@@ -430,7 +432,7 @@ class TestCommand:
         Commands.reset_players("<force>")
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_called_once_with()
@@ -467,7 +469,7 @@ class TestCommand:
             Commands.show_player("notch")
 
         self.backup_m.assert_not_called()
-        self.gsv_m.assert_not_called()
+        self.gp_m.assert_not_called()
         self.set_mode_m.assert_not_called()
         self.gpd_m.assert_not_called()
         self.player_gen_m.assert_called_once_with()

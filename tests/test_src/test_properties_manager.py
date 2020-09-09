@@ -4,13 +4,13 @@ from unittest import mock
 
 import pytest
 from colorama import Fore
+
+from server_manager.src.exceptions import PropertyError
 from server_manager.src.properties_manager import (
     MetaProperty,
     Properties,
     PropertiesManager,
-    get_server_mode,
     get_server_properties_filepath,
-    set_server_mode,
     validate_server_path,
 )
 
@@ -28,7 +28,6 @@ class TestPropertiesEnum:
         for prop in Properties:
             assert isinstance(prop.name, str)
             assert isinstance(prop.value, str)
-            assert prop.name.replace("_", "-") == prop.value
 
 
 class TestValidateServerPath:
@@ -140,7 +139,7 @@ class TestPropertiesManager:
         assert PropertiesManager.get_property("mock-b") == 11
         assert PropertiesManager.get_property("mock-c") == 12
 
-    def test_set_property(self):
+    def test_set_property_ok(self):
         self.mock_a.assert_not_called()
         self.mock_b.assert_not_called()
         self.mock_c.assert_not_called()
@@ -160,6 +159,13 @@ class TestPropertiesManager:
         self.mock_a.assert_called_once_with("a")
         self.mock_b.assert_called_once_with(52)
         self.mock_c.assert_called_once_with(-9)
+
+    def test_set_property_fail(self):
+        with pytest.raises(ValueError):
+            PropertiesManager.set_property(invalid_property=True)
+
+        with pytest.raises(ValueError):
+            PropertiesManager.set_property()
 
     def test_get_properties_raw(self):
         properties_raw = PropertiesManager.get_properties_raw()
@@ -205,6 +211,10 @@ class TestMetaProperty:
         self.reg_prop_m = mock.patch(
             root + "PropertiesManager.register_property"
         ).start()
+
+        yield
+
+        mock.patch.stopall()
 
     def test_ok(self):
         class BaseSomething1(metaclass=MetaProperty):
@@ -258,3 +268,110 @@ class TestMetaProperty:
 
             class FailedClass2(GoodBase2):
                 pass
+
+
+class TestBoolProperties:
+    defaults = {
+        "allow-nether": True,
+        "broadcast-rcon-to-ops": True,
+        "difficulty": "hard",
+        "enable-rcon": True,
+        "enable-status": True,
+        "enforce-whitelist": True,
+        "max-players": 3,
+        "online-mode": True,
+        "rcon.password": "",
+        "rcon.port": 25575,
+        "white-list": True,
+    }
+    new_values = {
+        "allow-nether": False,
+        "broadcast-rcon-to-ops": False,
+        "difficulty": "peaceful",
+        "enable-rcon": False,
+        "enable-status": False,
+        "enforce-whitelist": False,
+        "max-players": 50,
+        "online-mode": False,
+        "rcon.password": "fdssfasdf",
+        "rcon.port": 25575,
+        "white-list": False,
+    }
+    wrong_values = {
+        "allow-nether": 1 + 2j,
+        "broadcast-rcon-to-ops": "hello there",
+        "difficulty": 23,
+        "enable-rcon": "maybe",
+        "enable-status": "what?",
+        "enforce-whitelist": "?",
+        "max-players": False,
+        "online-mode": "I am the king",
+        "rcon.password": dict(),
+        "rcon.port": list(),
+        "white-list": set(),
+    }
+
+    properties = [
+        "AllowNetherProperty",
+        "BroadcastRconToOps",
+        "EnableRconProperty",
+        "OnlineModeProperty",
+    ]
+
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.module = __import__("server_manager").src.properties_manager
+
+        self.root = "server_manager.src.properties_manager."
+        self.gpr_m = mock.patch(
+            self.root + "PropertiesManager.get_properties_raw"
+        ).start()
+        self.wpr_m = mock.patch(
+            self.root + "PropertiesManager.write_properties_raw"
+        ).start()
+        self.prop_path = Path(__file__).parent.parent.joinpath(
+            "test_data/server.properties"
+        )
+        self.text = self.prop_path.read_text()
+        self.gpr_m.return_value = self.text
+
+        yield
+
+        mock.patch.stopall()
+
+    @pytest.mark.parametrize("propclassname", properties)
+    def test_get(self, propclassname):
+        prop = getattr(self.module, propclassname)
+        expected = self.defaults[prop.property_name]
+        assert prop.get() == expected
+        self.gpr_m.assert_called()
+
+    @pytest.mark.parametrize("propclassname", properties)
+    def test_set_ok(self, propclassname):
+        prop = getattr(self.module, propclassname)
+        new_value = self.new_values[prop.property_name]
+        prop.set(new_value)
+        string = f"{prop.property_name}={prop.value_to_str(new_value)}"
+        assert string in self.wpr_m.call_args[0][0]
+        self.gpr_m.assert_called()
+
+    @pytest.mark.parametrize("propclassname", properties)
+    def test_set_fail_type(self, propclassname):
+        prop = getattr(self.module, propclassname)
+        wrong_value = self.wrong_values[prop.property_name]
+        with pytest.raises(ValueError):
+            prop.set(wrong_value)
+
+    @pytest.mark.parametrize("propclassname", properties)
+    def test_set_fail_same_value(self, propclassname):
+        get_mocker = mock.patch(self.root + propclassname + ".get")
+        get_m = get_mocker.start()
+
+        prop = getattr(self.module, propclassname)
+        new_value = self.new_values[prop.property_name]
+        get_m.return_value = new_value
+        with pytest.raises(PropertyError):
+            prop.set(new_value)
+
+        get_m.assert_called_once_with()
+        get_mocker.stop()

@@ -10,7 +10,7 @@ from colorama.ansi import Fore
 from .exceptions import CheckError
 from .player import Player
 from .plugin import get_plugin_mode
-from .properties_manager import get_server_mode
+from .properties_manager import PropertiesManager
 
 
 def check_players(players: List[Player]) -> bool:
@@ -60,7 +60,7 @@ class PlayerChecks:
             bool: True for success, False otherwise.
         """
 
-        current_server_mode = get_server_mode()
+        current_server_mode = PropertiesManager.get_property("online_mode")
         invalid_modes = []
         for player in players:
             if player.online != current_server_mode:
@@ -119,7 +119,7 @@ def check_plugin() -> bool:
     """
 
     logger = logging.getLogger(__name__)
-    current_server_mode = get_server_mode()
+    current_server_mode = PropertiesManager.get_property("online_mode")
     plugin_mode = get_plugin_mode()
     if plugin_mode == current_server_mode:
         msg = "Plugin check failed [server-mode=%s, plugin-mode=%s]"

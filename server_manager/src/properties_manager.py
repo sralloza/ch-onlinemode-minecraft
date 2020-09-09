@@ -254,27 +254,3 @@ class WhitelistProperty(BaseProperty):
         file_data = cls.pattern_1.sub(r"\1" + bool2str(whl_state), file_data)
         file_data = cls.pattern_2.sub(r"\1" + bool2str(whl_state), file_data)
         PropertiesManager.write_properties_raw(file_data)
-
-
-@lru_cache(maxsize=10)
-def get_server_mode() -> bool:
-    """Returns the current server mode.
-
-    Returns:
-        bool: current server mode.
-    """
-
-    return PropertiesManager.get_property(Properties.online_mode)
-
-
-def set_server_mode(online_mode: bool):
-    return PropertiesManager.set_property(online_mode=online_mode)
-
-
-@lru_cache(maxsize=10)
-def get_whitelist_state() -> bool:
-    return PropertiesManager.get_property(Properties.whitelist)
-
-
-def set_whitelist_state(whitelist_state: bool):
-    return PropertiesManager.set_property(whitelist=whitelist_state)

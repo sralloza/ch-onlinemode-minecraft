@@ -5,7 +5,7 @@ import logging
 from .checks import check_players, check_plugin
 from .player import Player, change_players_mode
 from .plugin import set_plugin_mode
-from .properties_manager import get_server_mode, get_server_path, set_server_mode
+from .properties_manager import PropertiesManager, get_server_path
 
 
 def set_mode(new_mode):
@@ -21,7 +21,7 @@ def set_mode(new_mode):
 
     logger = logging.getLogger(__name__)
     server_path = get_server_path()
-    current_servermode = get_server_mode()
+    current_servermode = PropertiesManager.get_property("online_mode")
 
     logger.debug(
         "Setting online-mode=%s (current=%s, path=%s)",
@@ -44,4 +44,4 @@ def set_mode(new_mode):
     # Setters
     change_players_mode(players, new_mode)
     set_plugin_mode(not new_mode)  # plugin mode is the opposite as server mode
-    set_server_mode(new_mode)
+    PropertiesManager.set_property(online_mode=new_mode)
