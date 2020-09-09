@@ -7,10 +7,11 @@ from server_manager.src.exceptions import (
     InvalidPlayerError,
     InvalidPluginStateError,
     InvalidServerStateError,
+    PropertyError,
+    SFKError,
     SFKNotFoundError,
     SearchError,
     ServerManagerError,
-    SFKError,
 )
 
 
@@ -66,6 +67,15 @@ class TestInvalidFileError:
     def test_raises(self):
         with pytest.raises(InvalidFileError):
             raise InvalidFileError
+
+
+class TestPropertyError:
+    def test_inheritance(self):
+        assert issubclass(PropertyError, ServerManagerError)
+
+    def test_raises(self):
+        with pytest.raises(PropertyError):
+            raise PropertyError
 
 
 class TestSearchError:
