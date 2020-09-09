@@ -32,6 +32,13 @@ class Properties(Enum):
     rcon_port = "rcon.port"
     whitelist = "whitelist"
 
+    @classmethod
+    def get(cls, value):
+        try:
+            return cls[value]
+        except KeyError:
+            return cls(value)
+
 
 def validate_server_path(server_path: str):
     """Validates the `server_path`, ensuring that the server.properties file
@@ -72,7 +79,7 @@ class PropertiesManager:
     @classmethod
     @lru_cache(maxsize=10)
     def get_property(cls, request: PropertiesLike):
-        request = Properties(request)
+        request = Properties.get(request)
         return cls.getters_map[request]()
 
     @classmethod
