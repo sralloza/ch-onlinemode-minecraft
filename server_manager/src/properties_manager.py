@@ -2,6 +2,7 @@
 
 from enum import Enum
 from functools import lru_cache
+import logging
 from pathlib import Path
 import re
 import sys
@@ -9,11 +10,14 @@ from typing import Union
 
 from colorama import Fore
 
-from .exceptions import InvalidServerStateError
+from server_manager.src.utils import Validators
+
+from .exceptions import PropertyError
 from .paths import get_server_path
 from .utils import bool2str, str2bool
 
 PropertiesLike = Union["Properties", str]
+logger = logging.getLogger(__name__)
 
 
 class Properties(Enum):
@@ -21,6 +25,7 @@ class Properties(Enum):
     broadcast_rcon_to_ops = "broadcast-rcon-to-ops"
     difficulty = "difficulty"
     enable_rcon = "enable-rcon"
+    enable_status = "enable-status"
     max_players = "max-players"
     online_mode = "online-mode"
     rcon_password = "rcon.password"
@@ -181,6 +186,10 @@ class DifficultyProperty(BaseProperty):
 
 class EnableRconProperty(BaseProperty):
     property_name = "enable-rcon"
+
+
+class EnableStatusProperty(BaseProperty):
+    property_name = "enable-status"
 
 
 class MaxPlayersProperty(BaseProperty):
