@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 import logging
 from typing import Any, Dict, NoReturn
 
+import click
+
 from .src.backup import create_backup, get_backups_folder
 from .src.checks import remove_players_safely
 from .src.exceptions import InvalidPlayerError
@@ -26,229 +28,156 @@ def setup_logging():
     logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
 
-class Parser:
-    """Command line argument parser."""
-
-    parser = ArgumentParser("default")
-
-    @classmethod
-    def error(cls, msg) -> NoReturn:
-        """Prints the error to the stderr as well as the program usage.
-
-        Arguments:
-            msg (str): message to show.
-
-        Returns:
-            NoReturn: this function does not return.
-
-        """
-        return cls.parser.error(msg)
-
-    @classmethod
-    def print_help(cls):
-        """Prints the Parser's help."""
-        cls.parser.print_help()
-
-    @classmethod
-    def parse_args(cls) -> Dict[str, Any]:
-        """Parses the command line arguments using `argparse`.
-
-        Returns:
-            Dict[str, Any]: arguments parsed.
-        """
-
-        helpers = {
-            "backup": "backup server",
-            "debug-files": "list all files containing player data in server",
-            "get-online-mode": "print current online-mode",
-            "list-csv-players": "show players registered in csv",
-            "list-server-players": "show players found in server",
-            "reset-players": "remove all players safely",
-            "reset-players-force": "forces removal of players",
-            "set-online-mode": "set a new online-mode",
-            "set-online-mode-arg": "new online-mode to set",
-            "show-player": "print detailed inventory and ender chest of player",
-            "show-player-arg": "player to show",
-            "update-whitelist": "update whitelist using csv data",
-        }
-
-        parser = ArgumentParser("lia")
-        subparsers = parser.add_subparsers(dest="command")
-
-        subparsers.add_parser("backup", help=helpers["backup"])
-        subparsers.add_parser("debug-files", help=helpers["debug-files"])
-        subparsers.add_parser("get-online-mode", help=helpers["get-online-mode"])
-        subparsers.add_parser("list-csv-players", help=helpers["list-csv-players"])
-        subparsers.add_parser(
-            "list-server-players", help=helpers["list-server-players"]
-        )
-        reset_parser = subparsers.add_parser(
-            "reset-players", help=helpers["reset-players"]
-        )
-        reset_parser.add_argument(
-            "--force", action="store_true", help=helpers["reset-players-force"]
-        )
-
-        online_mode_parser = subparsers.add_parser(
-            "set-online-mode", help=helpers["set-online-mode"]
-        )
-        online_mode_parser.add_argument(
-            "online-mode", type=str2bool, help=helpers["set-online-mode-arg"]
-        )
-
-        show_player_parser = subparsers.add_parser(
-            "show-player", help=helpers["show-player"]
-        )
-        show_player_parser.add_argument(
-            "player", type=str, help=helpers["show-player-arg"]
-        )
-        subparsers.add_parser("update-whitelist", help=helpers["update-whitelist"])
-
-        cls.parser = parser
-        return vars(parser.parse_args())
+helpers = {
+    "backup": "backup server",
+    "debug-files": "list all files containing player data in server",
+    "get-online-mode": "print current online-mode",
+    "list-csv-players": "show players registered in csv",
+    "list-server-players": "show players found in server",
+    "reset-players": "remove all players safely",
+    "reset-players-force": "forces removal of players",
+    "set-online-mode": "set a new online-mode",
+    "set-online-mode-arg": "new online-mode to set",
+    "show-player": "print detailed inventory and ender chest of player",
+    "show-player-arg": "player to show",
+    "update-whitelist": "update whitelist using csv data",
+}
 
 
-def main():  # pylint: disable=too-many-return-statements, inconsistent-return-statements
-    """Main function."""
-
-    args = Parser.parse_args()
+@click.group()
+def main():
     setup_logging()
-    command = args["command"]
-
-    if command == "backup":
-        return Commands.backup()
-
-    if command == "list-csv-players":
-        return Commands.print_players_data()
-
-    if command == "debug-files":
-        return Commands.print_files()
-
-    if command == "get-online-mode":
-        return Commands.get_online_mode()
-
-    if command == "list-server-players":
-        return Commands.list_players()
-
-    if command == "reset-players":
-        return Commands.reset_players(args["force"])
-
-    if command == "set-online-mode":
-        return Commands.set_online_mode(args["online-mode"])
-
-    if command == "show-player":
-        return Commands.show_player(args["player"])
-
-    if command == "update-whitelist":
-        return Commands.update_whitelist()
-
-    return Parser.print_help()
 
 
-class Commands:
-    """All possible commands executed via command line."""
+@main.command("backup")
+def backup():
+    """Makes a backup of the minecraft server folder."""
+    create_backup()
 
-    @classmethod
-    def backup(cls):
-        """Makes a backup of the minecraft server folder."""
-        create_backup()
 
-    @classmethod
-    def get_online_mode(cls):
-        """Prints the current server online-mode."""
+@main.group("online-mode")
+def online_mode():
+    """Manages server's online mode."""
 
-        current_servermode = PropertiesManager.get_property("online_mode")
-        print(f"server is currently running as {current_servermode}")
 
-    @classmethod
-    def set_online_mode(cls, online_mode: bool):
-        """Sets the server online-mode.
+@online_mode.command("get")
+def get_online_mode():
+    """Prints the current server online-mode."""
 
-        Args:
-            online_mode (bool): new server online-mode
-        """
+    current_servermode = PropertiesManager.get_property("online_mode")
+    print(f"server is currently running as {current_servermode}")
 
+
+@online_mode.command("set")
+@click.argument("online-mode", type=bool)
+def set_online_mode(online_mode: bool):
+    """Sets the server online-mode.
+
+    Args:
+        online_mode (bool): new server online-mode
+    """
+
+    try:
         set_mode(new_mode=online_mode)
-        print(f"Set online-mode to {online_mode}")
+    except Exception as exc:
+        raise click.ClickException(", ".join(exc.args))
+    print(f"Set online-mode to {online_mode}")
 
-    @classmethod
-    def print_players_data(cls):
-        """Prints the players data from parsing the csv."""
 
-        for player in get_players_data():
-            print(" -", player)
+@main.group("players")
+def players():
+    """Manages players"""
 
-    @classmethod
-    def list_players(cls):
-        """Prints all the server's players information."""
 
-        players = Player.generate()
-        data = []
-        data.append(("username", "mode", "uuid", "inventory", "ender-chest"))
+@players.command("list-csv")
+def print_players_data():
+    """Prints the players data from parsing the csv."""
+    players = get_players_data()
+    if not players:
+        print("<no players found in the csv>")
+        return
 
-        for player in players:
-            mode = "online" if get_mode(player.uuid) else "offline"
-            inventory = str(len(player.get_inventory()))
-            ender_chest = str(len(player.get_ender_chest()))
-            data.append((player.username, mode, player.uuid, inventory, ender_chest))
+    for player in players:
+        print(" -", player)
 
-        lengths = [max([len(k[x]) for k in data]) for x in range(len(data[0]))]
 
-        for row in data:
-            format_data = tuple([x for y in zip(row, lengths) for x in y])
-            output_str = " | {:{}} - {:^{}} - {:^{}} - {:^{}} - {:^{}} |"
-            print(output_str.format(*format_data))
+@players.command("list-server")
+def list_players():
+    """Prints all the server's players information."""
 
-    @classmethod
-    def print_files(cls):
-        """Prints all the files containing players data."""
+    players = Player.generate()
+    if not players:
+        print("<no players found in the server archives>")
+        return
 
-        File.gen_files(get_server_path())
-        for key in File.memory:
-            for file in File.memory[key]:
-                print(file)
+    data = []
+    data.append(("username", "mode", "uuid", "inventory", "ender-chest"))
 
-    @classmethod
-    def update_whitelist(cls):
-        """Writes an updated whitelist to the whitelist file (`whitelist.json`)."""
+    for player in players:
+        mode = "online" if get_mode(player.uuid) else "offline"
+        inventory = str(len(player.get_inventory()))
+        ender_chest = str(len(player.get_ender_chest()))
+        data.append((player.username, mode, player.uuid, inventory, ender_chest))
 
-        return update_whitelist()
+    lengths = [max([len(k[x]) for k in data]) for x in range(len(data[0]))]
 
-    @classmethod
-    def reset_players(cls, force: bool) -> bool:
-        """Removes all the players data if each player has the ender chest
-        and the inventory emtpy.
+    for row in data:
+        format_data = tuple([x for y in zip(row, lengths) for x in y])
+        output_str = " | {:{}} - {:^{}} - {:^{}} - {:^{}} - {:^{}} |"
+        print(output_str.format(*format_data))
 
-        Args:
-            force (bool): if True, inventory and ender chest checkers
-                will be ignored.
 
-        Returns:
-            bool: True if all players were able to be removed, False otherwise.
-        """
+@players.command("reset")
+@click.option("--force", is_flag=True)
+def reset_players(force: bool) -> bool:
+    """Removes all the players' data if each player has the ender chest
+    and the inventory emtpy."""
 
-        players = Player.generate()
-        return remove_players_safely(players, force=force)
+    players = Player.generate()
+    return remove_players_safely(players, force=force)
 
-    @classmethod
-    def show_player(cls, player_name: str):
-        """Prints the detailed items in the inventory and ender chest of the player.
 
-        Args:
-            player_name (str): name of the player to show.
+@players.command("show")
+@click.argument("player-name", type=str)
+def show_player(player_name: str):
+    """Prints the detailed items in the inventory and ender chest of the player"""
 
-        Raises:
-            InvalidPlayerError: if the player doesn't exist.
-        """
+    player_name = player_name.lower()
+    players = Player.generate()
+    for player in players:
+        if player.username.lower() == player_name:
+            print("Inventory:")
+            print(player.get_detailed_inventory())
+            print("\nEnder chest:")
+            print(player.get_detailed_ender_chest())
+            return
 
-        player_name = player_name.lower()
-        players = Player.generate()
-        for player in players:
-            if player.username.lower() == player_name:
-                print("Inventory:")
-                print(player.get_detailed_inventory())
-                print("\nEnder chest:")
-                print(player.get_detailed_ender_chest())
-                return
+    raise click.ClickException(f"No player named {player_name!r}")
 
-        raise InvalidPlayerError(f"Player named {player_name!r} doesn't exist")
+
+@main.group("debug")
+def debug():
+    """Debug tools."""
+
+
+@debug.command("files")
+def print_files():
+    """Prints all the files containing players data."""
+
+    File.gen_files(get_server_path())
+    for key in File.memory:
+        for file in File.memory[key]:
+            print(file)
+
+
+@main.command("update-whitelist")
+def cli_update_whitelist():
+    """Writes an updated whitelist to the whitelist file (`whitelist.json`)."""
+
+    # TODO: test this call and update docstrign
+    # ensure_whitelist_on()
+    return update_whitelist()
+
+
+if __name__ == "__main__":
+    main()
