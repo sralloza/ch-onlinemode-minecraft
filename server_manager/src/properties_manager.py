@@ -134,6 +134,7 @@ class BaseProperty(metaclass=MetaProperty):
     property_name = None
     str_to_value = lambda x: str2bool(x, parser=False)
     value_to_str = bool2str
+    validator = Validators.bool
 
     @classmethod
     def get_pattern(cls):
@@ -145,8 +146,16 @@ class BaseProperty(metaclass=MetaProperty):
         return cls.str_to_value(cls.get_pattern().search(file_data).group(2))
 
     @classmethod
+    def validate(cls, value):
+        if cls.validator(value) is False:
+            msg = f"Validator 'Validators.{cls.validator.__name__}' rejected value {value!r}"
+            raise ValueError(msg)
+
+    @classmethod
     def set(cls, property_value):
+        cls.validate(property_value)
         cls.check_same_property(property_value)
+
         file_data = PropertiesManager.get_properties_raw()
         sub = r"\g<1>" + cls.value_to_str(property_value)
         file_data = cls.get_pattern().sub(sub, file_data)
@@ -156,8 +165,10 @@ class BaseProperty(metaclass=MetaProperty):
     def check_same_property(cls, new_property):
         current_property = cls.get()
         if new_property == current_property:
-            # TODO: log exception?
-            raise InvalidServerStateError(
+            logger.critical(
+                "Tried to set %s to %r (same value)", cls.property_name, new_property
+            )
+            raise PropertyError(
                 f"{cls.property_name} is already set to {current_property}"
             )
 
@@ -172,6 +183,7 @@ class BroadcastRconToOps(BaseProperty):
 
 class DifficultyProperty(BaseProperty):
     property_name = "difficulty"
+    validator = Validators.difficulty
 
     @classmethod
     def value_to_str(cls, difficulty: str) -> str:
@@ -179,7 +191,7 @@ class DifficultyProperty(BaseProperty):
 
     @classmethod
     def str_to_value(cls, string: str) -> str:
-        if string not in ["peaceful", "easy", "normal", "hard"]:
+        if not cls.validator(string):
             raise ValueError(f"Invalid difficulty: {string!r}")
         return string
 
@@ -196,6 +208,7 @@ class MaxPlayersProperty(BaseProperty):
     property_name = "max-players"
     value_to_str = str
     str_to_value = int
+    validator = Validators.int
 
 
 class OnlineModeProperty(BaseProperty):
@@ -206,12 +219,14 @@ class RconPassword(BaseProperty):
     property_name = "rcon.password"
     value_to_str = str
     str_to_value = str
+    validator = Validators.str
 
 
 class RconPort(BaseProperty):
     property_name = "rcon.port"
     value_to_str = str
     str_to_value = int
+    validator = Validators.int
 
 
 class WhitelistProperty(BaseProperty):
