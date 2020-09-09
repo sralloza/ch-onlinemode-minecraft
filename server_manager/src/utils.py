@@ -61,3 +61,37 @@ def str2bool(string: str, parser=False):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
     raise ValueError(f"{string!r} is not a valid boolean")
+
+
+class Validators:
+    @staticmethod
+    def bool(value):
+        if isinstance(value, bool):
+            return True
+        return False
+
+    @staticmethod
+    def difficulty(value):
+        if value not in ["peaceful", "easy", "normal", "hard"]:
+            return False
+        return True
+
+    @staticmethod
+    def int(value):
+        if Validators.bool(value):
+            return False
+        if isinstance(value, int):
+            return True
+        return False
+
+    @staticmethod
+    def str(value):
+        if isinstance(value, str):
+            return True
+        return False
+
+    @staticmethod
+    def float(value):
+        if isinstance(value, float):
+            return True
+        return False

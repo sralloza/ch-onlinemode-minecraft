@@ -2,7 +2,7 @@ from argparse import ArgumentTypeError
 
 import pytest
 
-from server_manager.src.utils import bool2str, str2bool
+from server_manager.src.utils import Validators, bool2str, str2bool
 
 
 def test_bool_to_str():
@@ -64,3 +64,54 @@ def test_str_to_bool_fail(mode):
     test(654)
     test("True-")
     test("-False")
+
+
+class TestValidators:
+    objects = [
+        "hi there",
+        26,
+        0,
+        -5,
+        -5.2654,
+        5e15,
+        5 + 2j,
+        list(),
+        set(),
+        dict(),
+        True,
+        False,
+        None,
+    ]
+    difficulty_objects = objects + [
+        "hard",
+        "hardcore",
+        "peaceful",
+        "deadly",
+        "dead",
+        "normal",
+    ]
+    bools = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0]
+    ints = [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    floats = [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+    strings = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    difficulties = [0 for _ in objects] + [1, 0, 1, 0, 0, 1]
+
+    @pytest.mark.parametrize("value,ok", zip(objects, bools))
+    def test_bool(self, value, ok):
+        assert Validators.bool(value) is bool(ok)
+
+    @pytest.mark.parametrize("value,ok", zip(difficulty_objects, difficulties))
+    def test_difficulty(self, value, ok):
+        assert Validators.difficulty(value) is bool(ok)
+
+    @pytest.mark.parametrize("value,ok", zip(objects, ints))
+    def test_int(self, value, ok):
+        assert Validators.int(value) is bool(ok)
+
+    @pytest.mark.parametrize("value,ok", zip(objects, strings))
+    def test_str(self, value, ok):
+        assert Validators.str(value) is bool(ok)
+
+    @pytest.mark.parametrize("value,ok", zip(objects, floats))
+    def test_float(self, value, ok):
+        assert Validators.float(value) is bool(ok)
