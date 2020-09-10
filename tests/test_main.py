@@ -39,6 +39,16 @@ def setup_logging_m():
         logging_m.assert_not_called()
 
 
+@pytest.mark.parametrize("arg", ["-h", "--help"])
+def test_help(arg):
+    runner = CliRunner()
+    result = runner.invoke(main, [arg])
+    assert result.exit_code == 0
+    assert "Ussage:" in result.stdout
+    assert "Options:" in result.stdout
+    assert "Commands:" in result.stdout
+
+
 def test_version():
     runner = CliRunner()
     result = runner.invoke(main, ["--version"])
