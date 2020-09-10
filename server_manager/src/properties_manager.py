@@ -124,16 +124,18 @@ class PropertiesManager:
 
 
 class MetaProperty(type):
-    def __new__(mcs, name, bases, attrs, **kwargs):
+
+    # pylint: disable=missing-param-doc,missing-type-doc
+    def __new__(cls, name, bases, attrs):
         property_name = attrs.get("property_name")
         if not property_name and "Base" not in name:
             raise ValueError("Must set property name")
 
-        cls = super().__new__(mcs, name, bases, attrs)
+        new_cls = super().__new__(cls, name, bases, attrs)
         if "Base" not in name:
-            PropertiesManager.register_property(cls, property_name)
+            PropertiesManager.register_property(new_cls, property_name)
 
-        return cls
+        return new_cls
 
 
 class BaseProperty(metaclass=MetaProperty):
@@ -189,11 +191,8 @@ class BroadcastRconToOpsProperty(BaseProperty):
 
 class DifficultyProperty(BaseProperty):
     property_name = "difficulty"
+    value_to_str = str
     validator = Validators.difficulty
-
-    @classmethod
-    def value_to_str(cls, difficulty: str) -> str:
-        return difficulty
 
     @classmethod
     def str_to_value(cls, string: str) -> str:

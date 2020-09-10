@@ -96,22 +96,22 @@ class TestValidators:
     strings = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     difficulties = [0 for _ in objects] + [1, 0, 1, 0, 0, 1]
 
-    @pytest.mark.parametrize("value,ok", zip(objects, bools))
-    def test_bool(self, value, ok):
-        assert Validators.bool(value) is bool(ok)
+    @pytest.mark.parametrize("value,is_ok", zip(objects, bools))
+    def test_bool(self, value, is_ok):
+        assert Validators.bool(value) is bool(is_ok)
 
-    @pytest.mark.parametrize("value,ok", zip(difficulty_objects, difficulties))
-    def test_difficulty(self, value, ok):
-        assert Validators.difficulty(value) is bool(ok)
+    @pytest.mark.parametrize("value,is_ok", zip(difficulty_objects, difficulties))
+    def test_difficulty(self, value, is_ok):
+        assert Validators.difficulty(value) is bool(is_ok)
 
-    @pytest.mark.parametrize("value,ok", zip(objects, ints))
-    def test_int(self, value, ok):
-        assert Validators.int(value) is bool(ok)
+    @pytest.mark.parametrize("value,is_ok", zip(objects, ints))
+    def test_int(self, value, is_ok):
+        assert Validators.int(value) is bool(is_ok)
 
-    @pytest.mark.parametrize("value,ok", zip(objects, strings))
-    def test_str(self, value, ok):
-        assert Validators.str(value) is bool(ok)
+    @pytest.mark.parametrize("value,is_ok", zip(objects, strings))
+    def test_str(self, value, is_ok):
+        assert Validators.str(value) is bool(is_ok)
 
-    @pytest.mark.parametrize("value,ok", zip(objects, floats))
-    def test_float(self, value, ok):
-        assert Validators.float(value) is bool(ok)
+    @pytest.mark.parametrize("value,is_ok", zip(objects, floats))
+    def test_float(self, value, is_ok):
+        assert Validators.float(value) is bool(is_ok)

@@ -33,6 +33,7 @@ class TestPropertiesEnum:
 
     def test_get(self):
         for prop in Properties:
+            assert Properties.get(prop) == prop
             assert Properties.get(prop.name) == prop
             assert Properties.get(prop.value) == prop
 
@@ -125,9 +126,7 @@ class TestPropertiesManager:
                 except KeyError:
                     return cls(value)
 
-        self.NewProperties = NewProperties
-
-        self.NewProperties = NewProperties
+        self.new_properties = NewProperties
         mock.patch(root + "Properties", NewProperties).start()
 
         self.getters = {
@@ -204,7 +203,7 @@ class TestPropertiesManager:
             get = 0
             set = 1
 
-        prop = self.NewProperties.dummy
+        prop = self.new_properties.dummy
 
         assert PropertiesManager.getters_map[prop] is None
         assert PropertiesManager.setters_map[prop] is None
@@ -261,6 +260,7 @@ class TestMetaProperty:
     def test_fail(self):
         with pytest.raises(ValueError, match="Must set property name"):
 
+            # pylint: disable=unused-variable
             class FailedClass(metaclass=MetaProperty):
                 pass
 
@@ -269,6 +269,7 @@ class TestMetaProperty:
 
         with pytest.raises(ValueError, match="Must set property name"):
 
+            # pylint: disable=unused-variable
             class FailedClass1(GoodBase1):
                 pass
 
@@ -277,6 +278,7 @@ class TestMetaProperty:
 
         with pytest.raises(ValueError, match="Must set property name"):
 
+            # pylint: disable=unused-variable
             class FailedClass2(GoodBase2):
                 pass
 
@@ -483,9 +485,9 @@ class TestWhitelistProperty:
 
     @pytest.mark.parametrize("whitelist", [True, False])
     def test_get_fail(self, whitelist):
-        a = str(not whitelist).lower()
-        b = str(whitelist).lower()
-        msg = f"enforce-whitelist={a}\nwhite-list={b}"
+        part_a = str(not whitelist).lower()
+        part_b = str(whitelist).lower()
+        msg = f"enforce-whitelist={part_a}\nwhite-list={part_b}"
         self.gpr_m.return_value = msg
 
         with pytest.raises(PropertyError):
