@@ -1,7 +1,10 @@
 """Useful functions to all the package."""
 
 import argparse
+from hashlib import sha256
 from typing import Any
+
+from .paths import get_server_path
 
 
 def bool2str(boolean: bool):
@@ -143,3 +146,14 @@ class Validators:
         if isinstance(value, float):
             return True
         return False
+
+
+def gen_hash() -> str:
+    """Generates a 256-bit hash identifying the server.
+
+    Returns:
+        str: 256-bit hash.
+    """
+    
+    data = get_server_path().as_posix().encode()
+    return sha256(data).hexdigest()

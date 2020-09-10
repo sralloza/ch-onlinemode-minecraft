@@ -1,8 +1,10 @@
 from argparse import ArgumentTypeError
+from pathlib import Path
+from unittest import mock
 
 import pytest
 
-from server_manager.src.utils import Validators, bool2str, str2bool
+from server_manager.src.utils import Validators, bool2str, gen_hash, str2bool
 
 
 def test_bool_to_str():
@@ -115,3 +117,14 @@ class TestValidators:
     @pytest.mark.parametrize("value,is_ok", zip(objects, floats))
     def test_float(self, value, is_ok):
         assert Validators.float(value) is bool(is_ok)
+
+
+strings = ["hello there", "this is random text", "blah blah blah"]
+
+
+@pytest.mark.parametrize("string", strings)
+@mock.patch("server_manager.src.utils.get_server_path")
+def test_gen_hash(gsp_m, string):
+    gsp_m.return_value = Path(string)
+    server_hash = gen_hash()
+    assert len(server_hash) == 64
