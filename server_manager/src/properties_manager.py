@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 import re
 import sys
-from typing import Union
+from typing import Any, Union
 
 from colorama import Fore
 
@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 class Properties(Enum):
+    """List of properties managed by PropertiesManager."""
+
     allow_nether = "allow-nether"
     broadcast_rcon_to_ops = "broadcast-rcon-to-ops"
     difficulty = "difficulty"
@@ -32,7 +34,19 @@ class Properties(Enum):
     whitelist = "whitelist"
 
     @classmethod
-    def get(cls, value):
+    def get(cls, value: PropertiesLike) -> "Properties":
+        """Properties validator.
+
+        Args:
+            value (PropertiesLike): input value.
+
+        Returns:
+            Properties: properties.
+        """
+
+        if isinstance(value, Properties):
+            return value
+
         try:
             return cls[value]
         except KeyError:
@@ -72,17 +86,37 @@ def get_server_properties_filepath(server_path: str = None) -> Path:
 
 
 class PropertiesManager:
+    """Manages settings of file `server.properties`."""
+
     getters_map = {}
     setters_map = {}
 
     @classmethod
     @lru_cache(maxsize=10)
-    def get_property(cls, request: PropertiesLike):
+    def get_property(cls, request: PropertiesLike) -> Any:
+        """Returs a property's current value.
+
+        Args:
+            request (PropertiesLike): property to find.
+
+        Returns:
+            Any: the property's current value.
+        """
+
         request = Properties.get(request)
         return cls.getters_map[request]()
 
     @classmethod
-    def set_property(cls, **kwargs):
+    def set_property(cls, **kwargs: Any):
+        """Sets a property's value.
+
+        Args:
+            kwargs (Any): just one property to set, and its new value.
+
+        Raises:
+            ValueError: if no valid property names are passed in kwargs.
+        """
+
         for property_ in cls.setters_map:
             if kwargs.get(property_.name) is not None:
                 cls.setters_map[property_](kwargs.get(property_.name))
@@ -118,12 +152,20 @@ class PropertiesManager:
         cls.get_property.cache_clear()
 
     @classmethod
-    def register_property(cls, property_class, property_name):
+    def register_property(cls, property_class: "BaseProperty", property_name: str):
+        """Registers a property (setter, getter and name).
+
+        Args:
+            property_class (BaseProperty): property class.
+            property_name (str): property name.
+        """
+
         cls.getters_map[Properties(property_name)] = property_class.get
         cls.setters_map[Properties(property_name)] = property_class.set
 
 
 class MetaProperty(type):
+    """Metaclass to automatically register new properties."""
 
     # pylint: disable=missing-param-doc,missing-type-doc
     def __new__(cls, name, bases, attrs):
@@ -139,6 +181,8 @@ class MetaProperty(type):
 
 
 class BaseProperty(metaclass=MetaProperty):
+    """Base class for Properties."""
+
     property_name = None
     str_to_value = lambda x: str2bool(x, parser=False)
     value_to_str = bool2str
@@ -146,21 +190,40 @@ class BaseProperty(metaclass=MetaProperty):
 
     @classmethod
     def get_pattern(cls):
+        """Returns the regex pattern to parse the `server.properties` file."""
+
         return re.compile(rf"({cls.property_name}=)(\w*)", re.IGNORECASE)
 
     @classmethod
     def get(cls):
+        """Returns the property's current value."""
+
         file_data = PropertiesManager.get_properties_raw()
         return cls.str_to_value(cls.get_pattern().search(file_data).group(2))
 
     @classmethod
-    def validate(cls, value):
+    def validate(cls, value: Any):
+        """Validates a value.
+
+        Args:
+            value (Any): input value.
+
+        Raises:
+            ValueError: if the value is not valid.
+        """
+
         if cls.validator(value) is False:
             msg = f"Validator 'Validators.{cls.validator.__name__}' rejected value {value!r}"
             raise ValueError(msg)
 
     @classmethod
-    def set(cls, property_value):
+    def set(cls, property_value: Any):
+        """Sets a new property value.
+
+        Args:
+            property_value (Any): property value to set.
+        """
+
         cls.validate(property_value)
         cls.check_same_property(property_value)
 
@@ -170,7 +233,17 @@ class BaseProperty(metaclass=MetaProperty):
         PropertiesManager.write_properties_raw(file_data)
 
     @classmethod
-    def check_same_property(cls, new_property):
+    def check_same_property(cls, new_property: Any):
+        """Checks if the property's current value is the same as `new_property`.
+
+        Args:
+            new_property (Any): new property value.
+
+        Raises:
+            PropertyError: if the property's current value is the
+                same as `new_property`.
+        """
+
         current_property = cls.get()
         if new_property == current_property:
             logger.critical(
@@ -182,34 +255,58 @@ class BaseProperty(metaclass=MetaProperty):
 
 
 class AllowNetherProperty(BaseProperty):
+    """Manages property 'allow-nether'."""
+
     property_name = "allow-nether"
 
 
 class BroadcastRconToOpsProperty(BaseProperty):
+    """Manages property 'broadcast-rcon-to-ops'."""
+
     property_name = "broadcast-rcon-to-ops"
 
 
 class DifficultyProperty(BaseProperty):
+    """Manages property 'difficulty'."""
+
     property_name = "difficulty"
     value_to_str = str
     validator = Validators.difficulty
 
     @classmethod
     def str_to_value(cls, string: str) -> str:
+        """Returns the string representation of a difficulty.
+
+        Args:
+            string (str): input difficulty.
+
+        Raises:
+            ValueError: if `string` is not a valid difficulty.
+
+        Returns:
+            str: string representation of a difficulty.
+        """
+
         if not cls.validator(string):
             raise ValueError(f"Invalid difficulty: {string!r}")
         return string
 
 
 class EnableRconProperty(BaseProperty):
+    """Manges property 'enable-rcon'."""
+
     property_name = "enable-rcon"
 
 
 class EnableStatusProperty(BaseProperty):
+    """"Manages property 'enable-status'."""
+
     property_name = "enable-status"
 
 
 class MaxPlayersProperty(BaseProperty):
+    """Manages property 'max-players'."""
+
     property_name = "max-players"
     value_to_str = str
     str_to_value = int
@@ -217,10 +314,14 @@ class MaxPlayersProperty(BaseProperty):
 
 
 class OnlineModeProperty(BaseProperty):
+    """Manages property 'online-mode'."""
+
     property_name = "online-mode"
 
 
 class RconPasswordProperty(BaseProperty):
+    """Manages property 'rcon.password'."""
+
     property_name = "rcon.password"
     value_to_str = str
     str_to_value = str
@@ -228,6 +329,8 @@ class RconPasswordProperty(BaseProperty):
 
 
 class RconPortProperty(BaseProperty):
+    """Manages property 'rcon.port'."""
+
     property_name = "rcon.port"
     value_to_str = str
     str_to_value = int
@@ -235,12 +338,23 @@ class RconPortProperty(BaseProperty):
 
 
 class WhitelistProperty(BaseProperty):
+    """Manages properties 'white-list' and 'enforce-whitelist'."""
+
     property_name = "whitelist"
     pattern_1 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
     pattern_2 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
 
     @classmethod
     def get(cls) -> bool:
+        """Returns the current whitelist status.
+
+        Raises:
+            PropertyError: if 'white-list' and 'enforce-whitelist' are unsynced.
+
+        Returns:
+            bool: current whitelist status.
+        """
+
         file_data = PropertiesManager.get_properties_raw()
         state1 = str2bool(cls.pattern_1.search(file_data).group(2), parser=False)
         state2 = str2bool(cls.pattern_2.search(file_data).group(2), parser=False)
@@ -252,7 +366,13 @@ class WhitelistProperty(BaseProperty):
         return state1
 
     @classmethod
-    def set(cls, whl_state: bool):
+    def set(cls, whl_state: bool):  # pylint: disable=arguments-differ
+        """Sets a new whitelist status.
+
+        Args:
+            whl_state (bool): new whitelist status.
+        """
+
         cls.validate(whl_state)
         cls.check_same_property(whl_state)
 
