@@ -1,21 +1,18 @@
 """Module interface with the command line."""
 
-from argparse import ArgumentParser
 import logging
-from typing import Any, Dict, NoReturn
 
 import click
 
+from . import __version__
 from .src.backup import create_backup, get_backups_folder
 from .src.checks import remove_players_safely
-from .src.exceptions import InvalidPlayerError
 from .src.files import File
 from .src.paths import get_server_path
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
 from .src.properties_manager import PropertiesManager
 from .src.set_mode import set_mode
-from .src.utils import str2bool
 from .src.whitelist import update_whitelist
 
 
@@ -27,6 +24,8 @@ def setup_logging():
     handlers = [logging.FileHandler(filename, "at", "utf8")]
     logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
+
+# pylint: disable=missing-raises-doc,missing-param-doc
 
 helpers = {
     "backup": "backup server",
@@ -45,22 +44,24 @@ helpers = {
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name="lia")
 def main():
+    """LIA utils"""
     setup_logging()
 
 
-@main.command("backup")
+@main.command("backup", help=helpers["backup"])
 def backup():
     """Makes a backup of the minecraft server folder"""
     create_backup()
 
 
 @main.group("online-mode")
-def online_mode():
+def online_mode_command():
     """Manages server's online mode"""
 
 
-@online_mode.command("get")
+@online_mode_command.command("get")
 def get_online_mode():
     """Prints the current server online-mode"""
 
@@ -68,7 +69,7 @@ def get_online_mode():
     print(f"server is currently running as {current_servermode}")
 
 
-@online_mode.command("set")
+@online_mode_command.command("set")
 @click.argument("online-mode", type=bool)
 def set_online_mode(online_mode: bool):
     """Sets the server online-mode"""
@@ -76,7 +77,9 @@ def set_online_mode(online_mode: bool):
     try:
         set_mode(new_mode=online_mode)
     except Exception as exc:
-        raise click.ClickException(", ".join(exc.args))
+        excname = exc.__class__.__name__
+        error_msg = f"{excname}: {', '.join([str(x) for x in exc.args])}"
+        raise click.ClickException(error_msg)
     print(f"Set online-mode to {online_mode}")
 
 
@@ -88,12 +91,12 @@ def players():
 @players.command("list-csv")
 def print_players_data():
     """Prints the players data from parsing the csv"""
-    players = get_players_data()
-    if not players:
+    csv_players = get_players_data()
+    if not csv_players:
         print("<no players found in the csv>")
         return
 
-    for player in players:
+    for player in csv_players:
         print(" -", player)
 
 
@@ -101,15 +104,15 @@ def print_players_data():
 def list_players():
     """Prints all the server's players information"""
 
-    players = Player.generate()
-    if not players:
+    server_players = Player.generate()
+    if not server_players:
         print("<no players found in the server archives>")
         return
 
     data = []
     data.append(("username", "mode", "uuid", "inventory", "ender-chest"))
 
-    for player in players:
+    for player in server_players:
         mode = "online" if get_mode(player.uuid) else "offline"
         inventory = str(len(player.get_inventory()))
         ender_chest = str(len(player.get_ender_chest()))
@@ -129,8 +132,8 @@ def reset_players(force: bool) -> bool:
     """Removes all the players' data if each player has the ender chest
     and the inventory emtpy"""
 
-    players = Player.generate()
-    return remove_players_safely(players, force=force)
+    server_players = Player.generate()
+    return remove_players_safely(server_players, force=force)
 
 
 @players.command("show")
@@ -139,8 +142,8 @@ def show_player(player_name: str):
     """Prints the detailed items in the inventory and ender chest of the player"""
 
     player_name = player_name.lower()
-    players = Player.generate()
-    for player in players:
+    server_players = Player.generate()
+    for player in server_players:
         if player.username.lower() == player_name:
             print("Inventory:")
             print(player.get_detailed_inventory())
