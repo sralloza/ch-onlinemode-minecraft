@@ -28,7 +28,7 @@ def bool2str(boolean: bool):
     return str(boolean).lower()
 
 
-def str2bool(string: str, parser=False):
+def str2bool(string: str, click_enabled=True):
     """Transforms a string to bool.
 
     Usage:
@@ -58,15 +58,15 @@ def str2bool(string: str, parser=False):
         return string
 
     string = str(string)
-    if string.lower() in ("yes", "true", "t", "y", "1", "sí", "si", "s"):
+    if string.lower() in ("yes", "true", "t", "on", "y", "1", "sí", "si", "s"):
         return True
-    if string.lower() in ("no", "false", "f", "n", "0"):
+    if string.lower() in ("no", "false", "f", "off", "n", "0"):
         return False
 
-    if parser:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
-
-    raise ValueError(f"{string!r} is not a valid boolean")
+    exc = ValueError(f"{string!r} is not a valid boolean")
+    if click_enabled:
+        return click_handle_exception(exc)
+    raise exc
 
 
 class Validators:

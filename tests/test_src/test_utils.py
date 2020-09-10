@@ -31,6 +31,10 @@ def test_str_to_bool_ok():
     assert str2bool("yes") is True
     assert str2bool("y") is True
     assert str2bool("YeS") is True
+    assert str2bool("on") is True
+    assert str2bool("oN") is True
+    assert str2bool("On") is True
+    assert str2bool("ON") is True
     assert str2bool("Sí") is True
     assert str2bool("sí") is True
     assert str2bool("SI") is True
@@ -45,6 +49,11 @@ def test_str_to_bool_ok():
     assert str2bool("FALSE") is False
     assert str2bool("F") is False
     assert str2bool("f") is False
+    assert str2bool("off") is False
+    assert str2bool("ofF") is False
+    assert str2bool("OfF") is False
+    assert str2bool("oFF") is False
+    assert str2bool("OFF") is False
     assert str2bool("no") is False
     assert str2bool("No") is False
     assert str2bool("nO") is False
@@ -53,27 +62,30 @@ def test_str_to_bool_ok():
     assert str2bool(0) is False
 
 
-@pytest.mark.parametrize("mode", ["argparse", "normal"])
-def test_str_to_bool_fail(mode):
+@pytest.mark.parametrize("mode", ["click", "normal"])
+@mock.patch("server_manager.src.utils.click_handle_exception")
+def test_str_to_bool_fail(che_m, mode):
     def test(string):
-        string = str(string)
-        if mode == "argparse":
-            exc = ArgumentTypeError
-            msg = "Boolean value expected"
-            parser = True
-        else:
-            exc = ValueError
-            msg = "%r is not a valid boolean" % string
-            parser = False
+        che_m.reset_mock()
+        original = "%r is not a valid boolean" % str(string)
+        msg = re.escape(original)
+        click_enabled = mode == "click"
 
-        with pytest.raises(exc, match=msg):
-            str2bool(string, parser=parser)
+        if click_enabled:
+            result = str2bool(string, click_enabled=click_enabled)
+            assert result == che_m.return_value
+            che_m.assert_called_once()
+        else:
+            with pytest.raises(ValueError, match=msg):
+                str2bool(string, click_enabled=click_enabled)
+            che_m.assert_not_called()
 
     test("invalid")
     test("hello there")
     test(654)
     test("True-")
     test("-False")
+    test(1+2j)
 
 
 class TestValidators:
