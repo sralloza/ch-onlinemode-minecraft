@@ -10,6 +10,7 @@ from server_manager.src.properties_manager import (
     MetaProperty,
     Properties,
     PropertiesManager,
+    WhitelistProperty,
     get_server_properties_filepath,
     validate_server_path,
 )
@@ -385,6 +386,66 @@ class TestNormalProperties:
         get_m.return_value = new_value
         with pytest.raises(PropertyError):
             prop.set(new_value)
+
+        get_m.assert_called_once_with()
+        get_mocker.stop()
+
+
+class TestWhitelistProperty:
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.module = __import__("server_manager").src.properties_manager
+
+        self.root = "server_manager.src.properties_manager."
+        self.gpr_m = mock.patch(
+            self.root + "PropertiesManager.get_properties_raw"
+        ).start()
+        self.wpr_m = mock.patch(
+            self.root + "PropertiesManager.write_properties_raw"
+        ).start()
+        self.prop_path = Path(__file__).parent.parent.joinpath(
+            "test_data/server.properties"
+        )
+        self.text = self.prop_path.read_text()
+        self.gpr_m.return_value = self.text
+
+    def test_get_ok(self):
+        expected = TestNormalProperties.defaults["whitelist"]
+        assert WhitelistProperty.get() == expected
+        self.gpr_m.assert_called()
+
+    @pytest.mark.parametrize("whitelist", [True, False])
+    def test_get_fail(self, whitelist):
+        a = str(not whitelist).lower()
+        b = str(whitelist).lower()
+        msg = f"enforce-whitelist={a}\nwhite-list={b}"
+        self.gpr_m.return_value = msg
+
+        with pytest.raises(PropertyError):
+            WhitelistProperty.get()
+
+    def test_set_ok(self):
+        new_value = TestNormalProperties.new_values["whitelist"]
+        WhitelistProperty.set(new_value)
+        string1 = f"white-list={WhitelistProperty.value_to_str(new_value)}"
+        string2 = f"enforce-whitelist={WhitelistProperty.value_to_str(new_value)}"
+        assert string1 in self.wpr_m.call_args[0][0]
+        assert string2 in self.wpr_m.call_args[0][0]
+        self.gpr_m.assert_called()
+
+    def test_set_fail_type(self):
+        wrong_value = TestNormalProperties.wrong_values["whitelist"]
+        with pytest.raises(ValueError):
+            WhitelistProperty.set(wrong_value)
+
+    def test_set_fail_same_value(self):
+        get_mocker = mock.patch(self.root + "WhitelistProperty.get")
+        get_m = get_mocker.start()
+
+        new_value = TestNormalProperties.new_values["whitelist"]
+        get_m.return_value = new_value
+        with pytest.raises(PropertyError):
+            WhitelistProperty.set(new_value)
 
         get_m.assert_called_once_with()
         get_mocker.stop()

@@ -10,10 +10,9 @@ from typing import Union
 
 from colorama import Fore
 
-from server_manager.src.utils import Validators
-
 from .exceptions import PropertyError
 from .paths import get_server_path
+from .utils import Validators
 from .utils import bool2str, str2bool
 
 PropertiesLike = Union["Properties", str]
@@ -238,8 +237,8 @@ class RconPortProperty(BaseProperty):
 
 class WhitelistProperty(BaseProperty):
     property_name = "whitelist"
-    pattern_1 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
-    pattern_2 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
+    pattern_1 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
+    pattern_2 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
 
     @classmethod
     def get(cls) -> bool:
@@ -248,13 +247,14 @@ class WhitelistProperty(BaseProperty):
         state2 = str2bool(cls.pattern_2.search(file_data).group(2), parser=False)
 
         if state1 != state2:
-            # TODO: improve exception name and log exception
             msg = "Properties white-list (%s) and enforce-whitelist (%s) can't be different"
-            raise Exception(msg)
+            logger.critical(msg, state1, state2)
+            raise PropertyError(msg % (state1, state2))
         return state1
 
     @classmethod
     def set(cls, whl_state: bool):
+        cls.validate(whl_state)
         cls.check_same_property(whl_state)
 
         file_data = PropertiesManager.get_properties_raw()
