@@ -2,8 +2,8 @@ from enum import Enum
 from pathlib import Path
 from unittest import mock
 
-from colorama import Fore
 import pytest
+from colorama import Fore
 
 from server_manager.src.exceptions import PropertyError
 from server_manager.src.properties_manager import (
@@ -279,7 +279,7 @@ class TestMetaProperty:
                 pass
 
 
-class TestBoolProperties:
+class TestNormalProperties:
     defaults = {
         "allow-nether": True,
         "broadcast-rcon-to-ops": True,
@@ -291,7 +291,7 @@ class TestBoolProperties:
         "online-mode": True,
         "rcon.password": "",
         "rcon.port": 25575,
-        "white-list": True,
+        "whitelist": True,
     }
     new_values = {
         "allow-nether": False,
@@ -303,8 +303,8 @@ class TestBoolProperties:
         "max-players": 50,
         "online-mode": False,
         "rcon.password": "fdssfasdf",
-        "rcon.port": 25575,
-        "white-list": False,
+        "rcon.port": 15957,
+        "whitelist": False,
     }
     wrong_values = {
         "allow-nether": 1 + 2j,
@@ -317,14 +317,18 @@ class TestBoolProperties:
         "online-mode": "I am the king",
         "rcon.password": dict(),
         "rcon.port": list(),
-        "white-list": set(),
+        "whitelist": set(),
     }
 
     properties = [
         "AllowNetherProperty",
-        "BroadcastRconToOps",
+        "BroadcastRconToOpsProperty",
         "EnableRconProperty",
+        "EnableStatusProperty",
+        "MaxPlayersProperty",
         "OnlineModeProperty",
+        "RconPasswordProperty",
+        "RconPortProperty",
     ]
 
     @pytest.fixture(autouse=True)
