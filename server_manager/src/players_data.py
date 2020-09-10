@@ -95,7 +95,7 @@ def get_mode(uuid) -> bool:
 
 
 def get_players_data() -> List[PlayerInterface]:
-    """Reads the excel and returns the players uuids and usernames.
+    """Reads the csv and returns the players uuids and usernames.
 
     Returns:
         List[PlayerInterface]: list of players found. Each player appears twice,

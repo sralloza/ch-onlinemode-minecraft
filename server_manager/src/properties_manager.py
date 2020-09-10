@@ -12,8 +12,7 @@ from colorama import Fore
 
 from .exceptions import PropertyError
 from .paths import get_server_path
-from .utils import Validators
-from .utils import bool2str, str2bool
+from .utils import Validators, bool2str, str2bool
 
 PropertiesLike = Union["Properties", str]
 logger = logging.getLogger(__name__)
