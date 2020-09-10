@@ -184,7 +184,7 @@ class AllowNetherProperty(BaseProperty):
     property_name = "allow-nether"
 
 
-class BroadcastRconToOps(BaseProperty):
+class BroadcastRconToOpsProperty(BaseProperty):
     property_name = "broadcast-rcon-to-ops"
 
 
@@ -222,14 +222,14 @@ class OnlineModeProperty(BaseProperty):
     property_name = "online-mode"
 
 
-class RconPassword(BaseProperty):
+class RconPasswordProperty(BaseProperty):
     property_name = "rcon.password"
     value_to_str = str
     str_to_value = str
     validator = Validators.str
 
 
-class RconPort(BaseProperty):
+class RconPortProperty(BaseProperty):
     property_name = "rcon.port"
     value_to_str = str
     str_to_value = int
