@@ -145,7 +145,7 @@ class BaseProperty(metaclass=MetaProperty):
 
     @classmethod
     def get_pattern(cls):
-        return re.compile(rf"({cls.property_name}=)(\w+)", re.IGNORECASE)
+        return re.compile(rf"({cls.property_name}=)(\w*)", re.IGNORECASE)
 
     @classmethod
     def get(cls):
