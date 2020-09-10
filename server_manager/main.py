@@ -3,6 +3,7 @@
 import logging
 
 import click
+from colorama import init
 
 from . import __version__
 from .src.backup import create_backup, get_backups_folder
@@ -13,6 +14,7 @@ from .src.player import Player
 from .src.players_data import get_mode, get_players_data
 from .src.properties_manager import PropertiesManager
 from .src.set_mode import set_mode
+from .src.utils import click_handle_exception
 from .src.whitelist import update_whitelist
 
 
@@ -50,6 +52,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def main():
     """LIA utils"""
     setup_logging()
+    init(autoreset=True)
 
 
 @main.command("backup", help=helpers["backup"])
@@ -79,9 +82,7 @@ def set_online_mode(online_mode: bool):
     try:
         set_mode(new_mode=online_mode)
     except Exception as exc:
-        excname = exc.__class__.__name__
-        error_msg = f"{excname}: {', '.join([str(x) for x in exc.args])}"
-        raise click.ClickException(error_msg)
+        return click_handle_exception(exc)
     print(f"Set online-mode to {online_mode}")
 
 
