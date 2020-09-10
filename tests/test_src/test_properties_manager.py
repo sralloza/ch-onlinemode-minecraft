@@ -7,6 +7,7 @@ from colorama import Fore
 
 from server_manager.src.exceptions import PropertyError
 from server_manager.src.properties_manager import (
+    DifficultyProperty,
     MetaProperty,
     Properties,
     PropertiesManager,
@@ -386,6 +387,72 @@ class TestNormalProperties:
         get_m.return_value = new_value
         with pytest.raises(PropertyError):
             prop.set(new_value)
+
+        get_m.assert_called_once_with()
+        get_mocker.stop()
+
+
+class TestDifficultyProperty:
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.module = __import__("server_manager").src.properties_manager
+
+        self.root = "server_manager.src.properties_manager."
+        self.gpr_m = mock.patch(
+            self.root + "PropertiesManager.get_properties_raw"
+        ).start()
+        self.wpr_m = mock.patch(
+            self.root + "PropertiesManager.write_properties_raw"
+        ).start()
+        self.prop_path = Path(__file__).parent.parent.joinpath(
+            "test_data/server.properties"
+        )
+        self.text = self.prop_path.read_text()
+        self.gpr_m.return_value = self.text
+
+    def test_get(self):
+        expected = TestNormalProperties.defaults["difficulty"]
+        assert DifficultyProperty.get() == expected
+        self.gpr_m.assert_called()
+
+    def test_str_to_value(self):
+        test_ok = DifficultyProperty.str_to_value
+
+        assert test_ok("normal") == "normal"
+        assert test_ok("peaceful") == "peaceful"
+        assert test_ok("hard") == "hard"
+
+        def test_fail(value):
+            with pytest.raises(ValueError):
+                DifficultyProperty.str_to_value(value)
+
+        test_fail(23)
+        test_fail("super-hard")
+        test_fail(1 + 5j)
+        test_fail(True)
+        test_fail(False)
+        test_fail(None)
+
+    def test_set_ok(self):
+        new_value = TestNormalProperties.new_values["difficulty"]
+        DifficultyProperty.set(new_value)
+        string = f"difficulty={DifficultyProperty.value_to_str(new_value)}"
+        assert string in self.wpr_m.call_args[0][0]
+        self.gpr_m.assert_called()
+
+    def test_set_fail_type(self):
+        wrong_value = TestNormalProperties.wrong_values["difficulty"]
+        with pytest.raises(ValueError):
+            DifficultyProperty.set(wrong_value)
+
+    def test_set_fail_same_value(self):
+        get_mocker = mock.patch(self.root + "DifficultyProperty.get")
+        get_m = get_mocker.start()
+
+        new_value = TestNormalProperties.new_values["difficulty"]
+        get_m.return_value = new_value
+        with pytest.raises(PropertyError):
+            DifficultyProperty.set(new_value)
 
         get_m.assert_called_once_with()
         get_mocker.stop()
