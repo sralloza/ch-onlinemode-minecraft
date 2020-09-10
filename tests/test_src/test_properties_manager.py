@@ -490,7 +490,7 @@ class TestWhitelistProperty:
         msg = f"enforce-whitelist={part_a}\nwhite-list={part_b}"
         self.gpr_m.return_value = msg
 
-        with pytest.raises(PropertyError):
+        with pytest.raises(ValueError):
             WhitelistProperty.get()
 
     def test_set_ok(self):

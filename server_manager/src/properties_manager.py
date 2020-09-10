@@ -361,7 +361,7 @@ class WhitelistProperty(BaseProperty):
         if state1 != state2:
             msg = "Properties white-list (%s) and enforce-whitelist (%s) can't be different"
             logger.critical(msg, state1, state2)
-            raise PropertyError(msg % (state1, state2))
+            raise ValueError(msg % (state1, state2))
         return state1
 
     @classmethod
