@@ -2,8 +2,8 @@ from enum import Enum
 from pathlib import Path
 from unittest import mock
 
-import pytest
 from colorama import Fore
+import pytest
 
 from server_manager.src.exceptions import PropertyError
 from server_manager.src.properties_manager import (
@@ -28,6 +28,11 @@ class TestPropertiesEnum:
         for prop in Properties:
             assert isinstance(prop.name, str)
             assert isinstance(prop.value, str)
+
+    def test_get(self):
+        for prop in Properties:
+            assert Properties.get(prop.name) == prop
+            assert Properties.get(prop.value) == prop
 
 
 class TestValidateServerPath:
@@ -111,6 +116,15 @@ class TestPropertiesManager:
             mock_c = "mock-c"
             dummy = "dummy"
 
+            @classmethod
+            def get(cls, value):
+                try:
+                    return cls[value]
+                except KeyError:
+                    return cls(value)
+
+        self.NewProperties = NewProperties
+
         self.NewProperties = NewProperties
         mock.patch(root + "Properties", NewProperties).start()
 
@@ -185,13 +199,8 @@ class TestPropertiesManager:
 
     def test_register_property(self):
         class DummyProperty:
-            @classmethod
-            def set(cls, *args):
-                return
-
-            @classmethod
-            def get(cls,):
-                return
+            get = 0
+            set = 1
 
         prop = self.NewProperties.dummy
 
