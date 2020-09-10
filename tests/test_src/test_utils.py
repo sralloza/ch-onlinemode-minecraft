@@ -1,10 +1,18 @@
 from argparse import ArgumentTypeError
 from pathlib import Path
+import re
 from unittest import mock
 
+from click.exceptions import ClickException
 import pytest
 
-from server_manager.src.utils import Validators, bool2str, gen_hash, str2bool
+from server_manager.src.utils import (
+    Validators,
+    bool2str,
+    click_handle_exception,
+    gen_hash,
+    str2bool,
+)
 
 
 def test_bool_to_str():
@@ -128,3 +136,17 @@ def test_gen_hash(gsp_m, string):
     gsp_m.return_value = Path(string)
     server_hash = gen_hash()
     assert len(server_hash) == 64
+
+
+exceptions = [
+    (ValueError("something went south", 43), "ValueError: something went south, 43"),
+    (RuntimeError("yeah", 654, 1 + 5j), "RuntimeError: yeah, 654, (1+5j)"),
+    (ZeroDivisionError("1!=2"), "ZeroDivisionError: 1!=2"),
+]
+
+
+@pytest.mark.parametrize("exc,expected", exceptions)
+def test_click_handle_exception(exc, expected):
+    expected = re.escape(expected)
+    with pytest.raises(ClickException, match=expected):
+        click_handle_exception(exc)

@@ -2,7 +2,9 @@
 
 import argparse
 from hashlib import sha256
-from typing import Any
+from typing import Any, NoReturn
+
+import click
 
 from .paths import get_server_path
 
@@ -154,6 +156,21 @@ def gen_hash() -> str:
     Returns:
         str: 256-bit hash.
     """
-    
+
     data = get_server_path().as_posix().encode()
     return sha256(data).hexdigest()
+
+
+def click_handle_exception(exc: Exception) -> NoReturn:
+    """Handles an exception during click execution.
+
+    Args:
+        exc (Exception): exception to handle
+
+    Raises:
+        click.ClickException: click exception raised.
+    """
+
+    excname = exc.__class__.__name__
+    error_msg = f"{excname}: {', '.join([str(x) for x in exc.args])}"
+    raise click.ClickException(error_msg)
