@@ -11,7 +11,7 @@ from .src.files import File
 from .src.paths import get_server_path
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
-from .src.properties_manager import get_server_mode
+from .src.properties_manager import PropertiesManager
 from .src.set_mode import set_mode
 from .src.utils import str2bool
 from .src.whitelist import update_whitelist
@@ -157,7 +157,7 @@ class Commands:
     def get_online_mode(cls):
         """Prints the current server online-mode."""
 
-        current_servermode = get_server_mode()
+        current_servermode = PropertiesManager.get_property("online_mode")
         print(f"server is currently running as {current_servermode}")
 
     @classmethod

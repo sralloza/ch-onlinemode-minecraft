@@ -29,6 +29,10 @@ class InvalidServerStateError(ServerManagerError):
     """Invalid server state error."""
 
 
+class PropertyError(ServerManagerError):
+    """Property Error."""
+
+
 class SearchError(ServerManagerError):
     """Search error."""
 

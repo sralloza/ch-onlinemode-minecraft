@@ -1,6 +1,7 @@
 """Useful functions to all the package."""
 
 import argparse
+from typing import Any
 
 
 def bool2str(boolean: bool):
@@ -61,3 +62,84 @@ def str2bool(string: str, parser=False):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
     raise ValueError(f"{string!r} is not a valid boolean")
+
+
+class Validators:
+    """Common variable types validators."""
+
+    @staticmethod
+    def bool(value: Any):
+        """Checks for bool values.
+
+        Args:
+            value (Any): input.
+
+        Returns:
+            bool: whether it's bool or not.
+        """
+
+        if isinstance(value, bool):
+            return True
+        return False
+
+    @staticmethod
+    def difficulty(value: Any):
+        """Checks for valid difficulty values.
+
+        Args:
+            value (Any): input.
+
+        Returns:
+            bool: whether it's a valid difficulty or not.
+        """
+
+        if value not in ["peaceful", "easy", "normal", "hard"]:
+            return False
+        return True
+
+    @staticmethod
+    def int(value: Any):
+        """Checks for int values.
+
+        Args:
+            value (Any): input.
+
+        Returns:
+            bool: whether it's int or not.
+        """
+
+        if Validators.bool(value):
+            return False
+        if isinstance(value, int):
+            return True
+        return False
+
+    @staticmethod
+    def str(value: Any):
+        """Checks for str values.
+
+        Args:
+            value (Any): input.
+
+        Returns:
+            bool: whether it's str or not.
+        """
+
+        if isinstance(value, str):
+            return True
+        return False
+
+    @staticmethod
+    def float(value: Any):
+        """Checks for float values.
+
+        Args:
+            value (Any): input.
+
+        Returns:
+            bool: whether it's float or not.
+        """
+
+        if isinstance(value, float):
+            return True
+        return False
