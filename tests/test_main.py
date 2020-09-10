@@ -44,9 +44,11 @@ def test_help(arg):
     runner = CliRunner()
     result = runner.invoke(main, [arg])
     assert result.exit_code == 0
-    assert "Ussage:" in result.stdout
+    assert "Usage:" in result.stdout
     assert "Options:" in result.stdout
     assert "Commands:" in result.stdout
+
+    setup_logging_m.call = False
 
 
 def test_version():
