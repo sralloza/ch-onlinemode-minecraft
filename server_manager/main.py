@@ -12,7 +12,7 @@ from .src.files import File
 from .src.paths import get_server_path
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
-from .src.properties_manager import PropertiesManager
+from .src.properties_manager import PropertiesManager, set_default_properties
 from .src.set_mode import set_mode
 from .src.utils import click_handle_exception
 from .src.whitelist import update_whitelist
@@ -27,7 +27,7 @@ def setup_logging():
     logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
 
-# pylint: disable=missing-raises-doc,missing-param-doc
+# pylint: disable=missing-raises-doc,missing-param-doc,missing-type-doc,missing-return-type-doc
 
 helpers = {
     "backup": "backup server",
@@ -153,6 +153,41 @@ def show_player(player_name: str):
             return
 
     raise click.ClickException(f"No player named {player_name!r}")
+
+
+@main.group("properties")
+@click_handle_exception
+def properties():
+    """Manage settings of server.properties"""
+
+
+@properties.command("set-defaults")
+@click_handle_exception
+def set_defaults():
+    """Set default values for all properties"""
+
+    set_default_properties()
+
+
+@properties.command("get")
+@click.argument("property_", metavar="PROPERTY")
+@click_handle_exception
+def get_property(property_):
+    """Get a property"""
+
+    value = PropertiesManager.get_property(property_)
+    print(f"{property_}={value}")
+
+
+@properties.command("set")
+@click.argument("property_", metavar="PROPERTY")
+@click.argument("value")
+@click_handle_exception
+def set_property(property_, value):
+    """Set a property"""
+
+    data = {property_: value}
+    return PropertiesManager.set_property(**data)
 
 
 @main.group("debug")

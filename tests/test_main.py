@@ -207,7 +207,11 @@ def test_show_player(player_gen_m, fail):
     player_gen_m.assert_called_once_with()
 
     if not fail:
-        out = "\nPlayer position: <pos>\n\nInventory: <inv>\n\nEnder chest: <end-chest>\n"
+        out = (
+            "\nPlayer position: <pos>\n"
+            "\nInventory: <inv>\n"
+            "\nEnder chest: <end-chest>\n"
+        )
         assert result.exit_code == 0
         assert result.output == out
 
@@ -224,6 +228,62 @@ def test_show_player(player_gen_m, fail):
 
     jeb.get_detailed_inventory.assert_not_called()
     jeb.get_detailed_ender_chest.assert_not_called()
+
+
+@pytest.mark.parametrize("exc", (ValueError("yes"), None))
+@mock.patch("server_manager.main.set_default_properties")
+def test_set_defaults(sdp_m, exc):
+    if exc:
+        sdp_m.side_effect = exc
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "set-defaults"])
+
+    if exc:
+        assert result.exit_code == 1
+        assert result.output == "Error: ValueError: yes\n"
+    else:
+        assert result.exit_code == 0
+        assert result.output == ""
+
+
+@pytest.mark.parametrize("error", [None, ValueError("fail")])
+@mock.patch("server_manager.main.PropertiesManager.get_property")
+def test_get_property(get_prop_m, error):
+    get_prop_m.return_value = "some-value"
+    if error:
+        get_prop_m.side_effect = error
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "get", "some-property"])
+
+    get_prop_m.assert_called_once_with("some-property")
+
+    if error:
+        assert result.exit_code == 1
+        assert result.output == "Error: ValueError: fail\n"
+    else:
+        assert result.exit_code == 0
+        assert result.output == "some-property=some-value\n"
+
+
+@pytest.mark.parametrize("error", [None, ValueError("failed")])
+@mock.patch("server_manager.main.PropertiesManager.set_property")
+def test_set_property(set_prop_m, error):
+    if error:
+        set_prop_m.side_effect = error
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "set", "some-property", "some-value"])
+    data = {"some-property": "some-value"}
+    set_prop_m.assert_called_once_with(**data)
+
+    if error:
+        assert result.exit_code == 1
+        assert result.output == "Error: ValueError: failed\n"
+    else:
+        assert result.exit_code == 0
+        assert result.output == ""
 
 
 @mock.patch("server_manager.main.File.gen_files")
