@@ -3,6 +3,7 @@
 import logging
 
 import click
+from colorama import init
 
 from . import __version__
 from .src.backup import create_backup, get_backups_folder
@@ -11,8 +12,9 @@ from .src.files import File
 from .src.paths import get_server_path
 from .src.player import Player
 from .src.players_data import get_mode, get_players_data
-from .src.properties_manager import PropertiesManager
+from .src.properties_manager import PropertiesManager, set_default_properties
 from .src.set_mode import set_mode
+from .src.utils import click_handle_exception
 from .src.whitelist import update_whitelist
 
 
@@ -25,7 +27,7 @@ def setup_logging():
     logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
 
-# pylint: disable=missing-raises-doc,missing-param-doc
+# pylint: disable=missing-raises-doc,missing-param-doc,missing-type-doc,missing-return-type-doc
 
 helpers = {
     "backup": "backup server",
@@ -50,6 +52,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 def main():
     """LIA utils"""
     setup_logging()
+    init(autoreset=True)
 
 
 @main.command("backup", help=helpers["backup"])
@@ -64,6 +67,7 @@ def online_mode_command():
 
 
 @online_mode_command.command("get")
+@click_handle_exception
 def get_online_mode():
     """Prints the current server online-mode"""
 
@@ -73,15 +77,11 @@ def get_online_mode():
 
 @online_mode_command.command("set")
 @click.argument("online-mode", type=bool)
+@click_handle_exception
 def set_online_mode(online_mode: bool):
     """Sets the server online-mode"""
 
-    try:
-        set_mode(new_mode=online_mode)
-    except Exception as exc:
-        excname = exc.__class__.__name__
-        error_msg = f"{excname}: {', '.join([str(x) for x in exc.args])}"
-        raise click.ClickException(error_msg)
+    set_mode(new_mode=online_mode)
     print(f"Set online-mode to {online_mode}")
 
 
@@ -147,13 +147,56 @@ def show_player(player_name: str):
     server_players = Player.generate()
     for player in server_players:
         if player.username.lower() == player_name:
-            print("Inventory:")
-            print(player.get_detailed_inventory())
-            print("\nEnder chest:")
-            print(player.get_detailed_ender_chest())
+            print("\nPlayer position:", player.get_position())
+            print("\nInventory:", player.get_detailed_inventory())
+            print("\nEnder chest:", player.get_detailed_ender_chest())
             return
 
     raise click.ClickException(f"No player named {player_name!r}")
+
+
+@main.group("properties")
+@click_handle_exception
+def properties():
+    """Manage settings of server.properties"""
+
+
+@properties.command("set-defaults")
+@click_handle_exception
+def set_defaults():
+    """Set default values for all properties"""
+
+    set_default_properties()
+
+
+@properties.command("list")
+@click_handle_exception
+def list_properties():
+    """Lists all the properties and its values"""
+
+    for propname in PropertiesManager.general_map:
+        print(f"{propname}={PropertiesManager.get_property(propname)}")
+
+
+@properties.command("get")
+@click.argument("property_", metavar="PROPERTY")
+@click_handle_exception
+def get_property(property_):
+    """Get a property"""
+
+    value = PropertiesManager.get_property(property_)
+    print(f"{property_}={value}")
+
+
+@properties.command("set")
+@click.argument("property_", metavar="PROPERTY")
+@click.argument("value")
+@click_handle_exception
+def set_property(property_, value):
+    """Set a property"""
+
+    data = {property_: value}
+    return PropertiesManager.set_property(**data)
 
 
 @main.group("debug")

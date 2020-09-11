@@ -192,6 +192,7 @@ def test_reset_players(player_gen_m, rps_m, force):
 def test_show_player(player_gen_m, fail):
     jeb = mock.MagicMock(username="Jeb")
     notch = mock.MagicMock(username="Notch")
+    notch.get_position.return_value = "<pos>"
     notch.get_detailed_inventory.return_value = "<inv>"
     notch.get_detailed_ender_chest.return_value = "<end-chest>"
     players = [jeb]
@@ -206,7 +207,11 @@ def test_show_player(player_gen_m, fail):
     player_gen_m.assert_called_once_with()
 
     if not fail:
-        out = "Inventory:\n<inv>\n\nEnder chest:\n<end-chest>\n"
+        out = (
+            "\nPlayer position: <pos>\n"
+            "\nInventory: <inv>\n"
+            "\nEnder chest: <end-chest>\n"
+        )
         assert result.exit_code == 0
         assert result.output == out
 
@@ -223,6 +228,78 @@ def test_show_player(player_gen_m, fail):
 
     jeb.get_detailed_inventory.assert_not_called()
     jeb.get_detailed_ender_chest.assert_not_called()
+
+
+@pytest.mark.parametrize("exc", (ValueError("yes"), None))
+@mock.patch("server_manager.main.set_default_properties")
+def test_set_defaults(sdp_m, exc):
+    if exc:
+        sdp_m.side_effect = exc
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "set-defaults"])
+
+    if exc:
+        assert result.exit_code == 1
+        assert result.output == "Error: ValueError: yes\n"
+    else:
+        assert result.exit_code == 0
+        assert result.output == ""
+
+
+@mock.patch("server_manager.main.PropertiesManager")
+def test_list_properties(prop_man_m):
+    prop_man_m.general_map = {"prop-a": "value-a", "prop-b": "value-b"}
+    prop_man_m.get_property.side_effect = prop_man_m.general_map.__getitem__
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "list"])
+
+    assert prop_man_m.get_property.call_count == 2
+    prop_man_m.get_property.assert_any_call("prop-a")
+    prop_man_m.get_property.assert_any_call("prop-b")
+
+    assert result.exit_code == 0
+    assert result.output == "prop-a=value-a\nprop-b=value-b\n"
+
+
+@pytest.mark.parametrize("error", [None, ValueError("fail")])
+@mock.patch("server_manager.main.PropertiesManager.get_property")
+def test_get_property(get_prop_m, error):
+    get_prop_m.return_value = "some-value"
+    if error:
+        get_prop_m.side_effect = error
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "get", "some-property"])
+
+    get_prop_m.assert_called_once_with("some-property")
+
+    if error:
+        assert result.exit_code == 1
+        assert result.output == "Error: ValueError: fail\n"
+    else:
+        assert result.exit_code == 0
+        assert result.output == "some-property=some-value\n"
+
+
+@pytest.mark.parametrize("error", [None, ValueError("failed")])
+@mock.patch("server_manager.main.PropertiesManager.set_property")
+def test_set_property(set_prop_m, error):
+    if error:
+        set_prop_m.side_effect = error
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "set", "some-property", "some-value"])
+    data = {"some-property": "some-value"}
+    set_prop_m.assert_called_once_with(**data)
+
+    if error:
+        assert result.exit_code == 1
+        assert result.output == "Error: ValueError: failed\n"
+    else:
+        assert result.exit_code == 0
+        assert result.output == ""
 
 
 @mock.patch("server_manager.main.File.gen_files")

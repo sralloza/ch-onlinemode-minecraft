@@ -9,8 +9,10 @@ omit =
     setup.py
     versioneer.py
     launcher.py
+    conftest.py
 
 [report]
 exclude_lines =
-    if __name__ == .__main__.:
+    pragma: no cover
     if __name__ == "__main__":
+    pass
