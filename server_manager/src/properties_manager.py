@@ -12,7 +12,7 @@ from colorama import Fore
 
 from .exceptions import PropertyError
 from .paths import get_server_path
-from .utils import Validators, bool2str, str2bool
+from .utils import Validators, bool2str, gen_hash, str2bool
 
 PropertiesLike = Union["Properties", str]
 logger = logging.getLogger(__name__)
@@ -89,6 +89,7 @@ class PropertiesManager:
 
     getters_map = {}
     setters_map = {}
+    general_map = {}
 
     @classmethod
     @lru_cache(maxsize=10)
@@ -106,6 +107,21 @@ class PropertiesManager:
         return cls.getters_map[request]()
 
     @classmethod
+    def adapt_value(cls, prop: PropertiesLike, value: Any) -> Any:
+        """Tryes to change `value` to the property valid type.
+
+        Args:
+            prop (PropertiesLike): property where the value belongs.
+            value (Any): value to adapt.
+
+        Returns:
+            Any: value adapted.
+        """
+
+        prop = Properties.get(prop)
+        return cls.general_map[prop].str_to_value(value)
+
+    @classmethod
     def set_property(cls, **kwargs: Any):
         """Sets a property's value.
 
@@ -118,7 +134,9 @@ class PropertiesManager:
 
         for property_ in cls.setters_map:
             if kwargs.get(property_.name) is not None:
-                cls.setters_map[property_](kwargs.get(property_.name))
+                value = kwargs.get(property_.name)
+                value = cls.adapt_value(property_, value)
+                cls.setters_map[property_](value)
                 break
         else:
             raise ValueError("Must set one argument")
@@ -159,8 +177,10 @@ class PropertiesManager:
             property_name (str): property name.
         """
 
-        cls.getters_map[Properties(property_name)] = property_class.get
-        cls.setters_map[Properties(property_name)] = property_class.set
+        prop = Properties(property_name)
+        cls.getters_map[prop] = property_class.get
+        cls.setters_map[prop] = property_class.set
+        cls.general_map[prop] = property_class
 
 
 class MetaProperty(type):
@@ -183,9 +203,10 @@ class BaseProperty(metaclass=MetaProperty):
     """Base class for Properties."""
 
     property_name = None
-    str_to_value = lambda x: str2bool(x, parser=False)
+    str_to_value = str2bool
     value_to_str = bool2str
     validator = Validators.bool
+    default = None
 
     @classmethod
     def get_pattern(cls):
@@ -252,17 +273,25 @@ class BaseProperty(metaclass=MetaProperty):
                 f"{cls.property_name} is already set to {current_property}"
             )
 
+    @classmethod
+    def set_default(cls):
+        """Sets the default value for the property."""
+
+        cls.set(cls.default)
+
 
 class AllowNetherProperty(BaseProperty):
     """Manages property 'allow-nether'."""
 
     property_name = "allow-nether"
+    default = True
 
 
 class BroadcastRconToOpsProperty(BaseProperty):
     """Manages property 'broadcast-rcon-to-ops'."""
 
     property_name = "broadcast-rcon-to-ops"
+    default = True
 
 
 class DifficultyProperty(BaseProperty):
@@ -271,6 +300,7 @@ class DifficultyProperty(BaseProperty):
     property_name = "difficulty"
     value_to_str = str
     validator = Validators.difficulty
+    default = "hard"
 
     @classmethod
     def str_to_value(cls, string: str) -> str:
@@ -295,12 +325,14 @@ class EnableRconProperty(BaseProperty):
     """Manges property 'enable-rcon'."""
 
     property_name = "enable-rcon"
+    default = True
 
 
 class EnableStatusProperty(BaseProperty):
     """"Manages property 'enable-status'."""
 
     property_name = "enable-status"
+    default = True
 
 
 class MaxPlayersProperty(BaseProperty):
@@ -310,12 +342,14 @@ class MaxPlayersProperty(BaseProperty):
     value_to_str = str
     str_to_value = int
     validator = Validators.int
+    default = 3
 
 
 class OnlineModeProperty(BaseProperty):
     """Manages property 'online-mode'."""
 
     property_name = "online-mode"
+    default = True
 
 
 class RconPasswordProperty(BaseProperty):
@@ -325,6 +359,7 @@ class RconPasswordProperty(BaseProperty):
     value_to_str = str
     str_to_value = str
     validator = Validators.str
+    default = gen_hash()
 
 
 class RconPortProperty(BaseProperty):
@@ -334,6 +369,7 @@ class RconPortProperty(BaseProperty):
     value_to_str = str
     str_to_value = int
     validator = Validators.int
+    default = 25575
 
 
 class WhitelistProperty(BaseProperty):
@@ -342,21 +378,22 @@ class WhitelistProperty(BaseProperty):
     property_name = "whitelist"
     pattern_1 = re.compile(r"(white-list=)(\w+)", re.IGNORECASE)
     pattern_2 = re.compile(r"(enforce-whitelist=)(\w+)", re.IGNORECASE)
+    default = True
 
     @classmethod
     def get(cls) -> bool:
         """Returns the current whitelist status.
 
         Raises:
-            PropertyError: if 'white-list' and 'enforce-whitelist' are unsynced.
+            ValueError: if 'white-list' and 'enforce-whitelist' are unsynced.
 
         Returns:
             bool: current whitelist status.
         """
 
         file_data = PropertiesManager.get_properties_raw()
-        state1 = str2bool(cls.pattern_1.search(file_data).group(2), parser=False)
-        state2 = str2bool(cls.pattern_2.search(file_data).group(2), parser=False)
+        state1 = str2bool(cls.pattern_1.search(file_data).group(2))
+        state2 = str2bool(cls.pattern_2.search(file_data).group(2))
 
         if state1 != state2:
             msg = "Properties white-list (%s) and enforce-whitelist (%s) can't be different"
@@ -379,3 +416,16 @@ class WhitelistProperty(BaseProperty):
         file_data = cls.pattern_1.sub(r"\1" + bool2str(whl_state), file_data)
         file_data = cls.pattern_2.sub(r"\1" + bool2str(whl_state), file_data)
         PropertiesManager.write_properties_raw(file_data)
+
+
+def set_default_properties():
+    """Sets the default value for all properties."""
+
+    for propname, prop in PropertiesManager.general_map.items():
+        try:
+            prop.set_default()
+            msg = f"{Fore.CYAN}Fixed property {propname!r}"
+            print(msg)
+        except PropertyError:
+            print(f"{Fore.LIGHTGREEN_EX}{propname} OK")
+

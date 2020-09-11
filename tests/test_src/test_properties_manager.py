@@ -2,8 +2,8 @@ from enum import Enum
 from pathlib import Path
 from unittest import mock
 
-import pytest
 from colorama import Fore
+import pytest
 
 from server_manager.src.exceptions import PropertyError
 from server_manager.src.properties_manager import (
@@ -13,8 +13,10 @@ from server_manager.src.properties_manager import (
     PropertiesManager,
     WhitelistProperty,
     get_server_properties_filepath,
+    set_default_properties,
     validate_server_path,
 )
+from server_manager.src.utils import str2bool
 
 
 class TestPropertiesEnum:
@@ -129,6 +131,19 @@ class TestPropertiesManager:
         self.new_properties = NewProperties
         mock.patch(root + "Properties", NewProperties).start()
 
+        self.validator_m = mock.MagicMock()
+        self.validator_m.a.str_to_value = str
+        self.validator_m.b.str_to_value = str2bool
+        self.validator_m.c.str_to_value = int
+
+        self.general_map = {
+            NewProperties.mock_a: self.validator_m.a,
+            NewProperties.mock_b: self.validator_m.b,
+            NewProperties.mock_c: self.validator_m.c,
+            NewProperties.dummy: None,
+        }
+        mock.patch(root + "PropertiesManager.general_map", self.general_map).start()
+
         self.getters = {
             NewProperties.mock_a: lambda: 10,
             NewProperties.mock_b: lambda: 11,
@@ -153,6 +168,11 @@ class TestPropertiesManager:
         assert PropertiesManager.get_property("mock-a") == 10
         assert PropertiesManager.get_property("mock-b") == 11
         assert PropertiesManager.get_property("mock-c") == 12
+
+    def test_adapt_value(self):
+        assert PropertiesManager.adapt_value("mock-a", 123) == "123"
+        assert PropertiesManager.adapt_value("mock-b", "on") is True
+        assert PropertiesManager.adapt_value("mock-c", "12") == 12
 
     def test_set_property_ok(self):
         self.mock_a.assert_not_called()
@@ -393,6 +413,17 @@ class TestNormalProperties:
         get_m.assert_called_once_with()
         get_mocker.stop()
 
+    @pytest.mark.parametrize("propclassname", properties)
+    def test_default(self, propclassname):
+        set_mocker = mock.patch(self.root + propclassname + ".set")
+        set_m = set_mocker.start()
+
+        prop = getattr(self.module, propclassname)
+        prop.set_default()
+
+        set_m.assert_called_once_with(prop.default)
+        set_mocker.stop()
+
 
 class TestDifficultyProperty:
     @pytest.fixture(autouse=True)
@@ -459,6 +490,15 @@ class TestDifficultyProperty:
         get_m.assert_called_once_with()
         get_mocker.stop()
 
+    def test_default(self):
+        set_mocker = mock.patch(self.root + "DifficultyProperty.set")
+        set_m = set_mocker.start()
+
+        DifficultyProperty.set_default()
+
+        set_m.assert_called_once_with(DifficultyProperty.default)
+        set_mocker.stop()
+
 
 class TestWhitelistProperty:
     @pytest.fixture(autouse=True)
@@ -518,3 +558,52 @@ class TestWhitelistProperty:
 
         get_m.assert_called_once_with()
         get_mocker.stop()
+
+    def test_default(self):
+        set_mocker = mock.patch(self.root + "WhitelistProperty.set")
+        set_m = set_mocker.start()
+
+        WhitelistProperty.set_default()
+
+        set_m.assert_called_once_with(WhitelistProperty.default)
+        set_mocker.stop()
+
+
+class TestSetDefaultProperties:
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.root = "server_manager.src.properties_manager."
+        self.mock = mock.MagicMock()
+        self.gen_map = {
+            "a": self.mock.a,
+            "b": self.mock.b,
+            "c": self.mock.c,
+            "d": self.mock.d,
+        }
+        self.mock.b.set_default.side_effect = PropertyError
+        self.mock.d.set_default.side_effect = PropertyError
+        mock.patch(
+            self.root + "PropertiesManager.general_map",
+            self.gen_map,
+        ).start()
+
+        yield
+
+        mock.patch.stopall()
+
+    def test_ok(self, capsys):
+        set_default_properties()
+
+        self.mock.a.set_default.assert_called_once_with()
+        self.mock.b.set_default.assert_called_once_with()
+        self.mock.c.set_default.assert_called_once_with()
+        self.mock.d.set_default.assert_called_once_with()
+
+        expected = f"{Fore.CYAN}Fixed property 'a'\n"
+        expected += f"{Fore.LIGHTGREEN_EX}b OK\n"
+        expected += f"{Fore.CYAN}Fixed property 'c'\n"
+        expected += f"{Fore.LIGHTGREEN_EX}d OK\n"
+
+        result = capsys.readouterr()
+        assert result.out == expected
+        assert result.err == ""
