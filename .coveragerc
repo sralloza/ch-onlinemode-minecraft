@@ -9,6 +9,7 @@ omit =
     setup.py
     versioneer.py
     launcher.py
+    conftest.py
 
 [report]
 exclude_lines =

@@ -10,7 +10,7 @@ def pytest_configure():
     os.environ["TESTING"] = "True"
     os.environ["SERVER-PATH-TESTING"] = TEST_PATH.as_posix()
     server_path = "/path/to/server"
-    os.makedirs(TEST_PATH.parent)
+    os.makedirs(TEST_PATH.parent, exist_ok=True)
     TEST_PATH.write_text(server_path)
 
 
