@@ -13,7 +13,7 @@
     {
       "label": "Clean with git",
       "type": "shell",
-      "command": "git clean -fdx -e data -e .venv -e tests",
+      "command": "git clean -fdx -e data -e .venv -e tests -e *.egg-info",
       "problemMatcher": []
     },
     {
