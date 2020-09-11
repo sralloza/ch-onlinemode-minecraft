@@ -67,6 +67,7 @@ def online_mode_command():
 
 
 @online_mode_command.command("get")
+@click_handle_exception
 def get_online_mode():
     """Prints the current server online-mode"""
 
@@ -76,13 +77,11 @@ def get_online_mode():
 
 @online_mode_command.command("set")
 @click.argument("online-mode", type=bool)
+@click_handle_exception
 def set_online_mode(online_mode: bool):
     """Sets the server online-mode"""
 
-    try:
-        set_mode(new_mode=online_mode)
-    except Exception as exc:
-        return click_handle_exception(exc)
+    set_mode(new_mode=online_mode)
     print(f"Set online-mode to {online_mode}")
 
 

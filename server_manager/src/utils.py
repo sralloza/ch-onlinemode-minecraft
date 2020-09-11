@@ -1,12 +1,16 @@
 """Useful functions to all the package."""
 
-import argparse
+from functools import wraps
 from hashlib import sha256
-from typing import Any, NoReturn
+from typing import Any
+from typing import Type
 
 import click
 
 from .paths import get_server_path
+
+_def = bytes(1)
+_Ex = Type[Exception]
 
 
 def bool2str(boolean: bool):
@@ -36,15 +40,14 @@ def str2bool(string: str, click_enabled=True):
         True
         >>> str2bool("False")
         False
-        >>> str2bool("Invalid", False)
+        >>> str2bool("Invalid", click_enabled=False)
         ValueError("'Invalid' is not a valid boolean")
 
 
     Args:
         string (str): input string.
-        parser (bool, optional): If True, in case of error it will raise
-            argparse.ArgumentTypeError instead of ValueError. If it is used
-            inside parse_args, it whould be True. Defaults to False.
+        click_enabled (bool, optional): If True, in case of error it will raise
+            a click Exception. Defaults to False.
 
     Raises:
         argparse.ArgumentTypeError: if the string is not valid and parser is True.
@@ -65,7 +68,12 @@ def str2bool(string: str, click_enabled=True):
 
     exc = ValueError(f"{string!r} is not a valid boolean")
     if click_enabled:
-        return click_handle_exception(exc)
+
+        def dummy_function():
+            raise exc
+
+        # pylint: disable=no-value-for-parameter
+        return click_handle_exception(_func=dummy_function)()
     raise exc
 
 
@@ -161,16 +169,45 @@ def gen_hash() -> str:
     return sha256(data).hexdigest()
 
 
-def click_handle_exception(exc: Exception) -> NoReturn:
-    """Handles an exception during click execution.
-
-    Args:
-        exc (Exception): exception to handle
+def click_handle_exception(
+    _func=_def, *, exc_type: _Ex = None
+):  # pylint:disable=W9015,W9016,W9011,W9012
+    """Handles an exception during click execution. Works as a decorator.
 
     Raises:
-        click.ClickException: click exception raised.
+        ValueError: if the decorator is misused.
+
+    Args:
+        exc_type (_Ex, optional): exception type. If None,
+            every exception will be catched. Defaults to None.
     """
 
-    excname = exc.__class__.__name__
-    error_msg = f"{excname}: {', '.join([str(x) for x in exc.args])}"
-    raise click.ClickException(error_msg)
+    is_def = _func is _def
+    is_call = callable(_func)
+    try:
+        is_exc = issubclass(_func, BaseException)
+    except TypeError:
+        is_exc = False
+
+    if not is_def and not is_call or is_exc and is_call:
+        raise ValueError(
+            "Use keyword arguments in the click_handle_exception decorator"
+        )
+
+    def outer_wrapper(func):
+        @wraps(func)
+        def inner_wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except BaseException as exc:
+                if exc_type and not isinstance(exc, exc_type):
+                    raise
+                excname = exc.__class__.__name__
+                error_msg = f"{excname}: {', '.join([str(x) for x in exc.args])}"
+                raise click.ClickException(error_msg)
+
+        return inner_wrapper
+
+    if _func is _def:
+        return outer_wrapper
+    return outer_wrapper(_func)

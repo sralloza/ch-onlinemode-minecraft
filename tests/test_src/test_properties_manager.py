@@ -185,14 +185,14 @@ class TestPropertiesManager:
         self.mock_b.assert_not_called()
         self.mock_c.assert_not_called()
 
-        PropertiesManager.set_property(mock_b=52)
+        PropertiesManager.set_property(mock_b="on")
         self.mock_a.assert_called_once_with("a")
-        self.mock_b.assert_called_once_with(52)
+        self.mock_b.assert_called_once_with(True)
         self.mock_c.assert_not_called()
 
         PropertiesManager.set_property(mock_c=-9)
         self.mock_a.assert_called_once_with("a")
-        self.mock_b.assert_called_once_with(52)
+        self.mock_b.assert_called_once_with(True)
         self.mock_c.assert_called_once_with(-9)
 
     def test_set_property_fail(self):

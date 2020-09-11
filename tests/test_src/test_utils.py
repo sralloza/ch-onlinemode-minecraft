@@ -1,4 +1,3 @@
-from argparse import ArgumentTypeError
 from pathlib import Path
 import re
 from unittest import mock
@@ -63,29 +62,27 @@ def test_str_to_bool_ok():
 
 
 @pytest.mark.parametrize("mode", ["click", "normal"])
-@mock.patch("server_manager.src.utils.click_handle_exception")
-def test_str_to_bool_fail(che_m, mode):
+# @mock.patch("server_manager.src.utils.click_handle_exception")
+def test_str_to_bool_fail(mode):
     def test(string):
-        che_m.reset_mock()
         original = "%r is not a valid boolean" % str(string)
         msg = re.escape(original)
         click_enabled = mode == "click"
 
         if click_enabled:
-            result = str2bool(string, click_enabled=click_enabled)
-            assert result == che_m.return_value
-            che_m.assert_called_once()
+            extended_msg = "ValueError: " + msg
+            with pytest.raises(ClickException, match=extended_msg):
+                str2bool(string, click_enabled=click_enabled)
         else:
             with pytest.raises(ValueError, match=msg):
                 str2bool(string, click_enabled=click_enabled)
-            che_m.assert_not_called()
 
     test("invalid")
     test("hello there")
     test(654)
     test("True-")
     test("-False")
-    test(1+2j)
+    test(1 + 2j)
 
 
 class TestValidators:
@@ -157,8 +154,43 @@ exceptions = [
 ]
 
 
+@pytest.mark.parametrize("invalid", [True, False])
+@pytest.mark.parametrize("always_call", [True, False])
+@pytest.mark.parametrize("target_exc", (ValueError, None))
 @pytest.mark.parametrize("exc,expected", exceptions)
-def test_click_handle_exception(exc, expected):
+def test_click_handle_exception(exc, expected, target_exc, always_call, invalid):
+    if target_exc:
+        if invalid:
+            with pytest.raises(ValueError, match="Use keyword arguments"):
+
+                @click_handle_exception(target_exc)
+                def invalid_function():
+                    pass
+
+            with pytest.raises(NameError):
+                assert invalid_function
+            return
+
+        @click_handle_exception(exc_type=target_exc)
+        def dummy_function(exc):
+            raise exc
+
+    elif always_call:
+
+        @click_handle_exception()
+        def dummy_function(exc):
+            raise exc
+
+    else:
+
+        @click_handle_exception
+        def dummy_function(exc):
+            raise exc
+
     expected = re.escape(expected)
-    with pytest.raises(ClickException, match=expected):
-        click_handle_exception(exc)
+    if target_exc and not isinstance(exc, target_exc):
+        with pytest.raises(exc.__class__):
+            dummy_function(exc)
+    else:
+        with pytest.raises(ClickException, match=expected):
+            dummy_function(exc)
