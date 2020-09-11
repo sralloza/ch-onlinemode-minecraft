@@ -192,6 +192,7 @@ def test_reset_players(player_gen_m, rps_m, force):
 def test_show_player(player_gen_m, fail):
     jeb = mock.MagicMock(username="Jeb")
     notch = mock.MagicMock(username="Notch")
+    notch.get_position.return_value = "<pos>"
     notch.get_detailed_inventory.return_value = "<inv>"
     notch.get_detailed_ender_chest.return_value = "<end-chest>"
     players = [jeb]
@@ -206,7 +207,7 @@ def test_show_player(player_gen_m, fail):
     player_gen_m.assert_called_once_with()
 
     if not fail:
-        out = "Inventory:\n<inv>\n\nEnder chest:\n<end-chest>\n"
+        out = "\nPlayer position: <pos>\n\nInventory: <inv>\n\nEnder chest: <end-chest>\n"
         assert result.exit_code == 0
         assert result.output == out
 

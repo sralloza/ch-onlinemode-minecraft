@@ -148,10 +148,9 @@ def show_player(player_name: str):
     server_players = Player.generate()
     for player in server_players:
         if player.username.lower() == player_name:
-            print("Inventory:")
-            print(player.get_detailed_inventory())
-            print("\nEnder chest:")
-            print(player.get_detailed_ender_chest())
+            print("\nPlayer position:", player.get_position())
+            print("\nInventory:", player.get_detailed_inventory())
+            print("\nEnder chest:", player.get_detailed_ender_chest())
             return
 
     raise click.ClickException(f"No player named {player_name!r}")
