@@ -4,8 +4,11 @@ from functools import lru_cache
 import os
 from pathlib import Path
 
-
 DATA_PATH = Path(__file__).parent.joinpath("data/server-path.txt")
+
+if os.environ.get("TESTING", None):  # pragma: no cover
+    DATA_PATH = Path(os.environ["SERVER-PATH-TESTING"])
+
 os.makedirs(DATA_PATH.parent, exist_ok=True)
 
 
