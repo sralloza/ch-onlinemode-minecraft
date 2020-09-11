@@ -1,6 +1,6 @@
 """Contains player related code."""
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import gzip
 from io import BytesIO
 import logging
@@ -13,6 +13,8 @@ from .exceptions import InvalidPlayerError
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
 from .players_data import get_mode, get_username, get_uuid
 from .properties_manager import get_server_path
+
+Coords = namedtuple("Coords", "dim x y z")
 
 
 class Item:
@@ -147,6 +149,18 @@ class Player:
         result = [Item(k, v) for k, v in result.items()]
         result.sort(key=lambda x: x.name)
         return result
+
+    def get_position(self) -> Coords:
+        """Returns the current coords of the player and its dimension.
+
+        Returns:
+            Coords: player position.
+        """
+
+        nbt_data = self.get_nbt_data()
+        coords = [round(x) for x in nbt_data["Pos"]]
+        dimension = nbt_data["Dimension"].split(":")[-1]
+        return Coords(dimension, *coords)
 
     def get_inventory(self) -> nbtlib.tag.List[nbtlib.tag.Compound]:
         """Returns the current items in the player's inventory.

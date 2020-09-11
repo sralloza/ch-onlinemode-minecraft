@@ -7,7 +7,7 @@ import pytest
 
 from server_manager.src.exceptions import InvalidPlayerError
 from server_manager.src.files import AdvancementsFile, File, PlayerDataFile, StatsFile
-from server_manager.src.player import Item, Player, change_players_mode
+from server_manager.src.player import Coords, Item, Player, change_players_mode
 
 # pylint: disable=redefined-outer-name
 
@@ -270,6 +270,30 @@ def test_analyse_items(player_mocks):
     expected_items = [Item(k, v) for k, v in expected_items.items()]
     expected_items.sort(key=lambda x: x.name)
     assert items == expected_items
+
+
+dims = [
+    ("minecraft:the_nether", "the_nether"),
+    ("minecraft:overworld", "overworld"),
+    ("minecraft:the_end", "the_end"),
+]
+
+
+@pytest.mark.parametrize("unparsed_dim,parsed_dim", dims)
+@mock.patch("server_manager.src.player.Player.get_nbt_data")
+def test_position(gnbtd_m, player_mocks, unparsed_dim, parsed_dim):
+    gnbtd_m.return_value = {"Pos": [321, 255, 123], "Dimension": unparsed_dim}
+    gm_m, gu_m = player_mocks
+    gm_m.return_value = "<mode>"
+    gu_m.return_value = "<username>"
+
+    adv_file = AdvancementsFile("<adv-path>")
+    stats_file = StatsFile("<stats-path>")
+    data_file = PlayerDataFile("<data-path>")
+
+    player = Player("<uuid>", adv_file, stats_file, data_file)
+    expected = Coords(parsed_dim, 321, 255, 123)
+    assert player.get_position() == expected
 
 
 @mock.patch("server_manager.src.player.Player.get_nbt_data")
