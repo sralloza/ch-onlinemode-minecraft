@@ -247,6 +247,22 @@ def test_set_defaults(sdp_m, exc):
         assert result.output == ""
 
 
+@mock.patch("server_manager.main.PropertiesManager")
+def test_list_properties(prop_man_m):
+    prop_man_m.general_map = {"prop-a": "value-a", "prop-b": "value-b"}
+    prop_man_m.get_property.side_effect = prop_man_m.general_map.__getitem__
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["properties", "list"])
+
+    assert prop_man_m.get_property.call_count == 2
+    prop_man_m.get_property.assert_any_call("prop-a")
+    prop_man_m.get_property.assert_any_call("prop-b")
+
+    assert result.exit_code == 0
+    assert result.output == "prop-a=value-a\nprop-b=value-b\n"
+
+
 @pytest.mark.parametrize("error", [None, ValueError("fail")])
 @mock.patch("server_manager.main.PropertiesManager.get_property")
 def test_get_property(get_prop_m, error):

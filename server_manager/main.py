@@ -169,6 +169,15 @@ def set_defaults():
     set_default_properties()
 
 
+@properties.command("list")
+@click_handle_exception
+def list_properties():
+    """Lists all the properties and its values"""
+
+    for propname in PropertiesManager.general_map:
+        print(f"{propname}={PropertiesManager.get_property(propname)}")
+
+
 @properties.command("get")
 @click.argument("property_", metavar="PROPERTY")
 @click_handle_exception
