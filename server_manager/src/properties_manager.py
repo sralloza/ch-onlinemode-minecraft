@@ -424,8 +424,7 @@ def set_default_properties():
     for propname, prop in PropertiesManager.general_map.items():
         try:
             prop.set_default()
-            msg = f"{Fore.CYAN}Fixed property {propname!r}"
+            msg = f"{Fore.CYAN}Fixed property {propname}"
             print(msg)
         except PropertyError:
             print(f"{Fore.LIGHTGREEN_EX}{propname} OK")
-

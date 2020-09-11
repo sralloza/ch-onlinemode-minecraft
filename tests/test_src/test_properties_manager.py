@@ -599,9 +599,9 @@ class TestSetDefaultProperties:
         self.mock.c.set_default.assert_called_once_with()
         self.mock.d.set_default.assert_called_once_with()
 
-        expected = f"{Fore.CYAN}Fixed property 'a'\n"
+        expected = f"{Fore.CYAN}Fixed property a\n"
         expected += f"{Fore.LIGHTGREEN_EX}b OK\n"
-        expected += f"{Fore.CYAN}Fixed property 'c'\n"
+        expected += f"{Fore.CYAN}Fixed property c\n"
         expected += f"{Fore.LIGHTGREEN_EX}d OK\n"
 
         result = capsys.readouterr()
