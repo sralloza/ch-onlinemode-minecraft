@@ -7,6 +7,7 @@ import re
 from typing import Optional, Type, Union
 
 from .exceptions import InvalidFileError
+from .players_data import translate
 
 logger = logging.getLogger(__name__)
 DataFile = Type["File"]
@@ -25,9 +26,9 @@ class MetaFile(type):  # pylint: disable=missing-param-doc, missing-type-doc
             bases[0].subtypes[name.lower().replace("file", "")] = cls
             bases[0].memory[name.lower().replace("file", "")] = list()
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args, hid=False, **kwargs):
         instance = type.__call__(cls, *args, **kwargs)
-        if not instance:
+        if not instance or hid:
             return instance
 
         classname = instance.__class__.__name__.lower().replace("file", "")
@@ -105,6 +106,16 @@ class File(metaclass=MetaFile):
             return cls.uuid_pattern.search(filepath.as_posix()).group(1)
         except AttributeError:
             return None
+
+    def translate(self) -> Type["File"]:
+        """Returns a File of the same class of self with the uuid translated.
+
+        Returns:
+            Type[File]: translated file.
+        """
+
+        data = self.path.as_posix().replace(self.uuid, translate(self.uuid))
+        return type(self)(data, hid=True)  # pylint: disable=unexpected-keyword-arg
 
     def read_bytes(self) -> bytes:
         """Returns the file content in bytes.
