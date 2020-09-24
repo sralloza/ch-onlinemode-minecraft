@@ -1,6 +1,7 @@
 """Module interface with the command line."""
 
 import logging
+from typing import List
 
 import click
 from colorama import init
@@ -18,44 +19,49 @@ from .src.utils import click_handle_exception
 from .src.whitelist import update_whitelist
 
 
-def setup_logging():
-    """Configures logging."""
+def setup_logging(args: List[str] = None):
+    """Configures logging.
+
+    Args:
+        args (List[str], optional): list of args given by the CLI.
+    """
 
     fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
     filename = get_backups_folder().joinpath("lia-manager.log")
     handlers = [logging.FileHandler(filename, "at", "utf8")]
     logging.basicConfig(level=10, format=fmt, handlers=handlers)
 
+    if args:
+        logger = logging.getLogger(__name__)
+        logger.info("Called CLI with args %s", args)
+
 
 # pylint: disable=missing-raises-doc,missing-param-doc,missing-type-doc,missing-return-type-doc
-
-helpers = {
-    "backup": "backup server",
-    "debug-files": "list all files containing player data in server",
-    "get-online-mode": "print current online-mode",
-    "list-csv-players": "show players registered in csv",
-    "list-server-players": "show players found in server",
-    "reset-players": "remove all players safely",
-    "reset-players-force": "forces removal of players",
-    "set-online-mode": "set a new online-mode",
-    "set-online-mode-arg": "new online-mode to set",
-    "show-player": "print detailed inventory and ender chest of player",
-    "show-player-arg": "player to show",
-    "update-whitelist": "update whitelist using csv data",
-}
-
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-@click.group(context_settings=CONTEXT_SETTINGS)
+class ShareArgsGroup(click.Group):
+    """Custom group that sets args in ctx."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, context_settings=CONTEXT_SETTINGS, **kwargs)
+
+    def parse_args(self, ctx, args):
+        ctx.ensure_object(dict)
+        ctx.obj["ARGS"] = args
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=ShareArgsGroup)
 @click.version_option(version=__version__, prog_name="lia")
-def main():
+@click.pass_context
+def main(ctx):
     """LIA utils"""
-    setup_logging()
+    setup_logging(args=ctx.obj["ARGS"])
     init(autoreset=True)
 
 
-@main.command("backup", help=helpers["backup"])
+@main.command("backup")
 def backup():
     """Makes a backup of the minecraft server folder"""
     create_backup()
@@ -224,4 +230,4 @@ def cli_update_whitelist():
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter
