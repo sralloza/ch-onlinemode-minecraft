@@ -224,6 +224,13 @@ def print_files(trs):
                 click.echo(file)
 
 
+@debug.command("translate")
+@click.argument("uuid")
+def translate_uuid(uuid):
+    """Translates a uuid"""
+
+    click.echo(translate(uuid))
+
 
 @main.command("update-whitelist")
 def cli_update_whitelist():
