@@ -12,7 +12,7 @@ from .src.checks import remove_players_safely
 from .src.files import File
 from .src.paths import get_server_path
 from .src.player import Player
-from .src.players_data import get_mode, get_players_data
+from .src.players_data import get_mode, get_players_data, translate
 from .src.properties_manager import PropertiesManager, set_default_properties
 from .src.set_mode import set_mode
 from .src.utils import click_handle_exception
@@ -211,13 +211,18 @@ def debug():
 
 
 @debug.command("files")
-def print_files():
+@click.option("--translate", "trs", is_flag=True)
+def print_files(trs):
     """Prints all the files containing players data"""
 
     File.gen_files(get_server_path())
     for key in File.memory:
         for file in File.memory[key]:
-            print(file)
+            if trs:
+                click.echo(file.translate())
+            else:
+                click.echo(file)
+
 
 
 @main.command("update-whitelist")

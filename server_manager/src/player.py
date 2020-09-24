@@ -11,7 +11,7 @@ import nbtlib
 
 from .exceptions import InvalidPlayerError
 from .files import AdvancementsFile, File, PlayerDataFile, StatsFile
-from .players_data import get_mode, get_username, get_uuid
+from .players_data import get_mode, get_username, get_uuid, translate
 from .properties_manager import get_server_path
 
 Coords = namedtuple("Coords", "dim x y z")
@@ -72,12 +72,17 @@ class Player:
             else:
                 raise TypeError(f"files can't be {type(type).__name__!r}")
 
+        missing_files = []
         for file in self.required_files:
             if not hasattr(self, file):
-                file = file.replace("file", "").replace("_", " ")
-                raise InvalidPlayerError(
-                    f"Can't create Player {self.username!r} without {file}"
-                )
+                missing_files.append(file.replace("file", "").replace("_", " ").strip())
+
+        if missing_files:
+            files = ", ".join([repr(x) for x in missing_files])
+            raise InvalidPlayerError(
+                f"Can't create Player {translate(self.uuid)}"
+                f" without files {files} ({self.uuid!r})"
+            )
 
     def __repr__(self):
         return f"Player({self.username}|{self.online} - {self.uuid})"
