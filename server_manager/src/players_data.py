@@ -94,6 +94,21 @@ def get_mode(uuid) -> bool:
     raise SearchError("No player found with uuid=%s" % uuid)
 
 
+def translate(uuid: str) -> str:
+    """Translates a uuid, showing the username and its mode.
+
+    Args:
+        uuid (str): uuid
+
+    Returns:
+        str: translated uuid.
+    """
+
+    user = get_username(uuid)
+    mode = get_mode(uuid)
+    return f"{user!r}<{mode}>"
+
+
 def get_players_data() -> List[PlayerInterface]:
     """Reads the csv and returns the players uuids and usernames.
 
