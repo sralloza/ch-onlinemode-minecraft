@@ -1,5 +1,6 @@
-from pathlib import Path
 import os
+from pathlib import Path
+
 
 TEST_PATH = Path(__file__).parent.parent.joinpath(
     "server_manager/src/data/server-path.testing"

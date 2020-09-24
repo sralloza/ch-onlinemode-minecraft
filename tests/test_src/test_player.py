@@ -47,11 +47,19 @@ def player_mocks():
 
 
 class TestInit:
-    def test_ok(self, player_mocks):
-        gm_m, gu_m = player_mocks
-        gm_m.return_value = "<username>"
-        gu_m.return_value = "<mode>"
+    @pytest.fixture(autouse=True)
+    def mocks(self):
+        self.gu_m = mock.patch("server_manager.src.player.get_username").start()
+        self.gm_m = mock.patch("server_manager.src.player.get_mode").start()
+        self.tr_m = mock.patch("server_manager.src.player.translate").start()
 
+        self.gm_m.return_value = "<username>"
+        self.gu_m.return_value = "<mode>"
+
+        yield
+        mock.patch.stopall()
+
+    def test_ok(self):
         adv_file = AdvancementsFile("<path>")
         stats_file = StatsFile("<path>")
         data_file = PlayerDataFile("<path>")
@@ -62,16 +70,12 @@ class TestInit:
         for files in permutations:
             players.append(Player("<uuid>", *files))
 
-        assert gm_m.call_count == gu_m.call_count == 6
+        assert self.gm_m.call_count == self.gu_m.call_count == 6
 
         for player in players[1:]:
             assert player == players[0]
 
-    def test_error(self, player_mocks):
-        gm_m, gu_m = player_mocks
-        gm_m.return_value = "<username>"
-        gu_m.return_value = "<mode>"
-
+    def test_error(self):
         adv_file = AdvancementsFile("<path>")
         stats_file = StatsFile("<path>")
         data_file = PlayerDataFile("<path>")
@@ -84,7 +88,7 @@ class TestInit:
             with pytest.raises(InvalidPlayerError, match="Can't create Player"):
                 Player("<uuid>", *files)
 
-        assert gm_m.call_count == gu_m.call_count == 6
+        assert self.gm_m.call_count == self.gu_m.call_count == 6
 
         with pytest.raises(TypeError, match="files can't be"):
             Player("<uuid>", "invalid-file")

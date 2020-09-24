@@ -3,14 +3,15 @@ from unittest import mock
 
 import pytest
 
+from server_manager.src.exceptions import SearchError
 from server_manager.src.players_data import (
+    CSV_PATH,
     get_mode,
     get_players_data,
     get_username,
     get_uuid,
-    CSV_PATH,
+    translate,
 )
-from server_manager.src.exceptions import SearchError
 
 
 def test_get_players_data():
@@ -73,3 +74,14 @@ def test_get_mode_fatal(gpd_m):
 
     with pytest.raises(SearchError):
         get_mode("some-id")
+
+
+@mock.patch("server_manager.src.players_data.get_mode")
+@mock.patch("server_manager.src.players_data.get_username")
+def test_translate(get_username_m, get_mode_m):
+    get_username_m.return_value = "notch"
+    get_mode_m.return_value = "notch-mode"
+
+    assert translate("uuid") == "'notch'<notch-mode>"
+    get_username_m.assert_called_once_with("uuid")
+    get_mode_m.assert_called_once_with("uuid")

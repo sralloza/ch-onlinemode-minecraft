@@ -71,6 +71,10 @@ class TestMetaFile:
             pass
 
         c31 = Child3(31)
+        Child1(110, hid=True)  # pylint: disable=unexpected-keyword-arg
+        Child1(210, hid=True)  # pylint: disable=unexpected-keyword-arg
+        Child1(310, hid=True)  # pylint: disable=unexpected-keyword-arg
+
         assert Base.memory == {
             "child1": [c11, c12, c13],
             "child2": [c21, c22],
@@ -185,6 +189,16 @@ class TestFile:
 
         assert not test("/var/invalid/xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx.invalid")
         assert not test("/home/user/test/invalid-uuid.png")
+
+    @mock.patch("server_manager.src.files.translate")
+    def test_translate(self, translate_m, file_creator):
+        translate_m.return_value = "<translated>"
+
+        file = file_creator("/world/typea/00000000-0000-0000-0000-000000000000.json")
+        translated = file.translate()
+
+        assert isinstance(translated, self.TypeA)
+        assert translated.path.as_posix() == "/world/typea/<translated>.json"
 
     @mock.patch("pathlib.Path.read_bytes")
     def test_read_bytes(self, read_m, file_creator):

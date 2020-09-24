@@ -8,14 +8,16 @@ from server_manager.main import main, setup_logging
 from server_manager.src.exceptions import CheckError
 
 
+@pytest.mark.parametrize("args", [None, ["com", "arg"]])
 @mock.patch("logging.FileHandler")
 @mock.patch("server_manager.main.get_backups_folder")
 @mock.patch("logging.basicConfig")
-def test_setup_logging(log_config_m, gsp_m, file_h_m):
+def test_setup_logging(log_config_m, gsp_m, file_h_m, args, caplog):
+    caplog.set_level(10)
     fmt = "[%(asctime)s] %(levelname)s - %(name)s:%(lineno)s - %(message)s"
     filename = gsp_m.return_value.joinpath.return_value
 
-    setup_logging()
+    setup_logging(args=args)
 
     gsp_m.assert_called_once_with()
     gsp_m.return_value.joinpath.assert_called_once_with("lia-manager.log")
@@ -27,6 +29,13 @@ def test_setup_logging(log_config_m, gsp_m, file_h_m):
     )
     setup_logging_m.call = False
 
+    if args:
+        assert caplog.record_tuples == [
+            ("server_manager.main", 20, "Called CLI with args %s" % args)
+        ]
+    else:
+        assert caplog.records == []
+
 
 @pytest.fixture(autouse=True)
 def setup_logging_m():
@@ -34,7 +43,7 @@ def setup_logging_m():
     logging_m = mock.patch("server_manager.main.setup_logging").start()
     yield
     if setup_logging_m.call:
-        logging_m.assert_called_once_with()
+        logging_m.assert_called_once_with(args=mock.ANY)
     else:
         logging_m.assert_not_called()
 
@@ -302,23 +311,54 @@ def test_set_property(set_prop_m, error):
         assert result.output == ""
 
 
+@pytest.mark.parametrize("translate", [True, False])
 @mock.patch("server_manager.main.File.gen_files")
 @mock.patch("server_manager.main.get_server_path")
 @mock.patch("server_manager.main.File.memory")
-def test_print_files(memory_m, gsp_m, gen_files_m):
+def test_print_files(memory_m, gsp_m, gen_files_m, translate):
+    class Test:
+        def __init__(self, name):
+            self.name = name
+
+        def __str__(self):
+            return self.name
+
+        def translate(self):
+            return self.name + ".t"
+
     memory = {"a": ["a1"], "b": ["b1", "b2"], "c": ["c1", "c2", "c3"]}
+    memory = {k: [Test(x) for x in v] for k, v in memory.items()}
     memory_m.__getitem__.side_effect = lambda x: memory[x]
     memory_m.__iter__.side_effect = lambda: iter(memory)
 
     runner = CliRunner()
-    result = runner.invoke(main, ["debug", "files"])
+    args = ["debug", "files"]
+    if translate:
+        args.append("--translate")
+    result = runner.invoke(main, args)
 
     gsp_m.assert_called_once_with()
     gen_files_m.assert_called_once_with(gsp_m.return_value)
     memory_m.__getitem__.assert_called()
 
     assert result.exit_code == 0
-    assert result.output == "a1\nb1\nb2\nc1\nc2\nc3\n"
+    if translate:
+        assert result.output == "a1.t\nb1.t\nb2.t\nc1.t\nc2.t\nc3.t\n"
+    else:
+        assert result.output == "a1\nb1\nb2\nc1\nc2\nc3\n"
+
+
+@mock.patch("server_manager.main.translate")
+def test_translate_command(translate_m):
+    translate_m.return_value = "<translated>"
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["debug", "translate", "uuid"])
+
+    assert result.exit_code == 0
+    assert result.output == "<translated>\n"
+
+    translate_m.assert_called_once_with("uuid")
 
 
 @mock.patch("server_manager.main.update_whitelist")
